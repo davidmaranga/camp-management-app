@@ -1,0 +1,13 @@
+.Select {
+  position: relative;
+
+  &___slim {
+    &_label {
+      margin: 0 0 8px 0 !important;
+    }
+  }
+
+  &_helperTextContainer {
+    margin: 8px 0 0 0;
+  }
+}

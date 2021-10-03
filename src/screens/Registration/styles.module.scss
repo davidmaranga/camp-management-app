@@ -1,0 +1,36 @@
+.Registration {
+  padding: 50px;
+
+  &_card {
+    padding: 30px;
+    margin: 0 auto;
+    max-width: 500px;
+  }
+
+  &_title {
+    margin-bottom: 20px !important;
+  }
+
+  &_withMargin {
+    margin-top: 20px;
+  }
+
+  &_buttonGroup {
+    margin-top: 40px;
+
+    &_button {
+      width: 100%;
+    }
+
+    &_buttonText {
+      align-items: center;
+      display: flex;
+      justify-content: center;
+    }
+
+    &_spinner {
+      margin-left: 12px;
+      width: auto !important;
+    }
+  }
+}

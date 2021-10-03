@@ -1,0 +1,13 @@
+@import '../../scss/variables';
+
+.Users {
+  padding: 50px;
+
+  &_card {
+    padding: 30px;
+  }
+
+  &_title {
+    margin-bottom: 20px !important;
+  }
+}
