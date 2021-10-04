@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Switch, Redirect, Route } from 'react-router-dom';
-import { Registration, Map, Users } from './screens';
+import { Registration, Map, Users, Map3D } from './screens';
 import './scss/App.scss';
 
 /* eslint-disable react/jsx-props-no-spreading */
@@ -1938,6 +1938,12 @@ const App = () => {
             path="/map"
             name="Map"
             render={(props) => <Map {...props} />}
+          />
+
+          <Route
+            path="/map3d"
+            name="3DMap"
+            render={(props) => <Map3D {...props} />}
           />
 
           <Route
