@@ -25,7 +25,7 @@ const Map3D = () => {
       pitch: 30,
       bearing: 240.6,
       zoom,
-      maxBounds: bounds,
+      maxBounds: bounds, // create boundaries
       antialias: true,
     });
 
