@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
+import { dataLocation } from '../../utils/sprite';
 import './index.scss';
 
 mapboxgl.accessToken =
@@ -20,12 +21,13 @@ const Map3D = () => {
     if (map.current) return; // initialize map only once
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v10',
+      // style: 'mapbox://styles/son0fanton/ckucmdm5j0t4g18rzvcqe0phs',
+      style: 'mapbox://styles/son0fanton/ckudvm47ha33518npspwv4dqx',
       center: [lng, lat],
       pitch: 30,
       bearing: 240.6,
       zoom,
-      maxBounds: bounds,
+      maxBounds: bounds, // create boundaries
       antialias: true,
     });
 
@@ -94,6 +96,36 @@ const Map3D = () => {
           },
         },
       });
+
+      map.current.addSource('userPin', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [121.05551152122844, 14.609190169474882],
+          },
+        },
+      });
+
+      let lati = 14.609190169474882;
+      let longi = 121.05551152122844;
+
+      map.current.addLayer({
+        id: 'userPin',
+        type: 'symbol',
+        source: 'userPin',
+        layout: {
+          'icon-image': 'in-national-2',
+        },
+      });
+
+      setInterval(async () => {
+        lati -= 0.00000000920322;
+        longi -= 0.0000025001024;
+        const geojson = await dataLocation(map, lati, longi);
+        map.current.getSource('userPin').setData(geojson);
+      }, 900);
 
       map.current.addLayer({
         id: 'mainWrapper',
