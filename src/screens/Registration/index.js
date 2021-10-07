@@ -1,7 +1,11 @@
+/* eslint-disable no-unreachable */
 import React, { useState, useEffect } from 'react';
 import { Formik } from 'formik';
 import dateFormat from 'dateformat';
+import { useAlert } from 'react-alert';
+import QRCode from 'qrcode.react';
 import isEmpty from 'lodash/isEmpty';
+
 import styles from './styles.module.scss';
 
 import {
@@ -24,13 +28,18 @@ import {
 } from '../../globals';
 
 const Registration = () => {
-  const [isRegistering, setIsRegistering] = useState(false);
+  const alert = useAlert();
+  const [isRegisteringUser, setIsRegisteringUser] = useState(false);
+  const [isRegisteringVehicle, setIsRegisteringVehicle] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [userIsFound, setUserIsFound] = useState(false);
+  const [foundUser, setFoundUser] = useState(null);
+  const [qrCode, setQrCode] = useState(null);
+  const [plateNumber, setPlateNumber] = useState('');
+  const [foundVehicle, setFoundVehicle] = useState(null);
   const [gpsDevicesOptions, setGpsDevicesOptions] = useState([]);
 
-  const validate = (values) => {
+  const validateUser = (values) => {
     const errors = {};
 
     if (!values.firstName) {
@@ -41,28 +50,58 @@ const Registration = () => {
       errors.lastName = 'This field is required.';
     }
 
-    if (!values.sex.value && !userIsFound) {
+    if (!values.sex.value && !foundUser) {
       errors.sex = 'This field is required.';
     }
 
-    if (!values.birthDate && !userIsFound) {
+    if (!values.birthDate && !foundUser) {
       errors.birthDate = 'This field is required.';
     }
 
-    if (!values.homeAddress && !userIsFound) {
+    if (!values.homeAddress && !foundUser) {
       errors.homeAddress = 'This field is required.';
     }
 
-    if (!values.contactNumber && !userIsFound) {
+    if (!values.contactNumber && !foundUser) {
       errors.contactNumber = 'This field is required.';
     }
 
-    if (!values.userType.value && !userIsFound) {
+    if (!values.userType.value && !foundUser) {
       errors.userType = 'This field is required.';
     }
 
-    if (!values.gpsDevice.value) {
+    if (!values.hasCellphone.value) {
+      errors.hasCellphone = 'This field is required.';
+    }
+
+    if (!values.gpsDevice.value && values.hasCellphone.value === 'No') {
       errors.gpsDevice = 'This field is required.';
+    }
+
+    return errors;
+  };
+
+  const validateVehicle = (values) => {
+    const errors = {};
+
+    if (!values.userID.value) {
+      errors.userID = 'This field is required.';
+    }
+
+    if (!values.plateNumber) {
+      errors.plateNumber = 'This field is required.';
+    }
+
+    if (!values.color && !foundVehicle) {
+      errors.color = 'This field is required.';
+    }
+
+    if (!values.brand && !foundVehicle) {
+      errors.brand = 'This field is required.';
+    }
+
+    if (!values.model && !foundVehicle) {
+      errors.model = 'This field is required.';
     }
 
     return errors;
@@ -70,7 +109,7 @@ const Registration = () => {
 
   useEffect(() => {
     const users = JSON.parse(localStorage.getItem('users')) || [];
-    setUserIsFound(
+    setFoundUser(
       users.find(
         (user) =>
           user.firstName.toLowerCase() === firstName.toLowerCase() &&
@@ -78,6 +117,16 @@ const Registration = () => {
       )
     );
   }, [firstName, lastName]);
+
+  useEffect(() => {
+    const vehicles = JSON.parse(localStorage.getItem('vehicles')) || [];
+    setFoundVehicle(
+      vehicles.find(
+        (vehicle) =>
+          vehicle.plateNumber.toLowerCase() === plateNumber.toLowerCase()
+      )
+    );
+  }, [plateNumber]);
 
   useEffect(() => {
     const options = [];
@@ -97,288 +146,549 @@ const Registration = () => {
 
   return (
     <div className={styles.Registration}>
-      <Card className={styles.Registration_card}>
-        <Text type={textTypes.HEADING.XS} className={styles.Registration_title}>
-          {!userIsFound ? 'Registration Form' : 'Assign GPS Device'}
-        </Text>
+      <Grid>
+        <Card className={styles.Registration_card}>
+          <Text
+            type={textTypes.HEADING.XS}
+            className={styles.Registration_title}
+          >
+            User Registration Form
+          </Text>
 
-        <Formik
-          initialValues={{
-            firstName: '',
-            lastName: '',
-            sex: {
-              label: sexTypes.MALE,
-              value: sexTypes.MALE,
-            },
-            birthDate: '',
-            homeAddress: '',
-            contactNumber: '',
-            userType: {
-              label: userTypes.VISITOR,
-              value: userTypes.VISITOR,
-            },
-            gpsDevice: {
-              label: 'Select...',
-              value: null,
-            },
-          }}
-          onSubmit={async (values, { setErrors, setFieldValue }) => {
-            const errors = validate(values);
-            if (!isEmpty(errors)) {
-              setErrors(errors);
-              return;
-            }
+          <Formik
+            initialValues={{
+              firstName: '',
+              lastName: '',
+              sex: {
+                label: sexTypes.MALE,
+                value: sexTypes.MALE,
+              },
+              birthDate: '',
+              homeAddress: '',
+              contactNumber: '',
+              userType: {
+                label: userTypes.VISITOR,
+                value: userTypes.VISITOR,
+              },
+              hasCellphone: {
+                label: 'No',
+                value: 'No',
+              },
+              gpsDevice: {
+                label: 'Select...',
+                value: null,
+              },
+            }}
+            onSubmit={async (values, { setErrors, setFieldValue }) => {
+              const errors = validateUser(values);
+              if (!isEmpty(errors)) {
+                setErrors(errors);
+                return;
+              }
 
-            setIsRegistering(true);
+              setIsRegisteringUser(true);
 
-            const users = JSON.parse(localStorage.getItem('users')) || [];
-
-            if (!userIsFound) {
-              const newUser = {
-                id: Math.floor(Math.random() * Date.now()),
-                firstName: values.firstName,
-                lastName: values.lastName,
-                sex: values.sex.value,
-                birthDate: dateFormat(values.birthDate, 'mm/dd/yyyy'),
-                homeAddress: values.homeAddress,
-                contactNumber: values.contactNumber,
-                userType: values.userType.value,
-                dateRegistered: Math.floor(Date.now() / 1000),
-                gpsDevice: values.gpsDevice.value,
-                timeIn: Math.floor(Date.now() / 1000),
-                timeOut: null,
-              };
+              let id = Math.floor(Math.random() * Date.now()); // userId
 
               // Create new user
-              localStorage.setItem(
-                'users',
-                JSON.stringify([...users, newUser])
-              );
-            } else {
-              // Get the verified user so that we can update the time in
-              const user = users.find(
-                (u) =>
-                  u.firstName.toLowerCase() ===
-                    values.firstName.toLowerCase() &&
-                  u.lastName.toLowerCase() === values.lastName.toLowerCase()
-              );
-              const updatedUser = {
-                ...user,
-                gpsDevice: values.gpsDevice.value,
-                timeIn: Math.floor(Date.now() / 1000),
-                timeOut: null,
-              };
-              const newUsers = [...users];
-              newUsers.splice(users.indexOf(user), 1, updatedUser);
-              localStorage.setItem('users', JSON.stringify(newUsers));
-            }
+              if (!foundUser) {
+                const users = JSON.parse(localStorage.getItem('users')) || [];
 
-            // Then, we remove the gpsDeviceOption in the state
-            const gpsDeviceOptionIndex = gpsDevicesOptions.findIndex(
-              (gpsDeviceOption) =>
-                gpsDeviceOption.value === values.gpsDevice.value
-            );
+                const newUser = {
+                  id,
+                  firstName: values.firstName,
+                  lastName: values.lastName,
+                  sex: values.sex.value,
+                  birthDate: dateFormat(values.birthDate, 'mm/dd/yyyy'),
+                  homeAddress: values.homeAddress,
+                  contactNumber: values.contactNumber,
+                  userType: values.userType.value,
+                  dateRegistered: Math.floor(Date.now() / 1000),
+                };
 
-            const newGpsDevicesOptions = [...gpsDevicesOptions];
-            if (gpsDeviceOptionIndex > -1) {
-              newGpsDevicesOptions.splice(gpsDeviceOptionIndex, 1);
-              setGpsDevicesOptions(newGpsDevicesOptions);
-            }
+                localStorage.setItem(
+                  'users',
+                  JSON.stringify([...users, newUser])
+                );
+              }
 
-            // Then we update the isAssigned of that gpsDevice in the localstorage
-            const gpsDevices = JSON.parse(localStorage.getItem('gpsDevices'));
-            const gpsDeviceIndex = gpsDevices.findIndex(
-              (gpsDevice) => gpsDevice.id === values.gpsDevice.value
-            );
-            const newGpsDevices = [...gpsDevices];
-            if (gpsDeviceOptionIndex > -1) {
-              newGpsDevices[gpsDeviceIndex].isAssigned = true;
-              localStorage.setItem('gpsDevices', JSON.stringify(newGpsDevices));
-            }
+              if (values.hasCellphone.value === 'No') {
+                // Then, we remove the gpsDeviceOption in the state
+                const gpsDeviceOptionIndex = gpsDevicesOptions.findIndex(
+                  (gpsDeviceOption) =>
+                    gpsDeviceOption.value === values.gpsDevice.value
+                );
 
-            // Reset the form to its initial state
-            setFieldValue('firstName', '');
-            setFieldValue('lastName', '');
-            setFieldValue('sex', {
-              label: sexTypes.MALE,
-              value: sexTypes.MALE,
-            });
-            setFieldValue('birthDate', '');
-            setFieldValue('homeAddress', '');
-            setFieldValue('contactNumber', '');
-            setFieldValue('userType', {
-              label: userTypes.VISITOR,
-              value: userTypes.VISITOR,
-            });
-            setFieldValue('gpsDevice', {
-              label: 'Select...',
-              value: null,
-            });
+                const newGpsDevicesOptions = [...gpsDevicesOptions];
+                if (gpsDeviceOptionIndex > -1) {
+                  newGpsDevicesOptions.splice(gpsDeviceOptionIndex, 1);
+                  setGpsDevicesOptions(newGpsDevicesOptions);
+                }
 
-            // Then we reset the states
-            setIsRegistering(false);
-            setFirstName('');
-            setLastName('');
-            setUserIsFound(false);
-          }}
-        >
-          {({ errors, values, handleSubmit, setFieldValue }) => (
-            <form onSubmit={handleSubmit}>
-              <Grid className={styles.Registration_withMargin}>
-                <ControlledInput
-                  name="firstName"
-                  placeholder="First Name*"
-                  icon="person"
-                  value={values.firstName}
-                  error={errors.firstName}
-                  onChange={(e) => {
-                    setFirstName(e.target.value);
-                    setFieldValue('firstName', e.target.value);
-                  }}
-                />
+                // Then we update the assignedID and type of that gpsDevice in the localstorage
+                if (foundUser) {
+                  id = foundUser.id;
+                }
 
-                <ControlledInput
-                  name="lastName"
-                  placeholder="Last Name*"
-                  icon="person"
-                  value={values.lastName}
-                  error={errors.lastName}
-                  onChange={(e) => {
-                    setLastName(e.target.value);
-                    setFieldValue('lastName', e.target.value);
-                  }}
-                />
-              </Grid>
+                const gpsDevices = JSON.parse(
+                  localStorage.getItem('gpsDevices')
+                );
+                const gpsDeviceIndex = gpsDevices.findIndex(
+                  (gpsDevice) => gpsDevice.id === values.gpsDevice.value
+                );
+                const newGpsDevices = [...gpsDevices];
+                if (gpsDeviceOptionIndex > -1) {
+                  newGpsDevices[gpsDeviceIndex].assignedID = id;
+                  newGpsDevices[gpsDeviceIndex].type = 'User';
+                  localStorage.setItem(
+                    'gpsDevices',
+                    JSON.stringify(newGpsDevices)
+                  );
+                }
+              } else {
+                // Show a qr code for scanning
+                setQrCode({ value: 'http://facebook.github.io/react/' });
+              }
 
-              {!userIsFound && (
-                <>
-                  <Grid className={styles.Registration_withMargin}>
+              // Show a success alert
+              alert.success('User Registered');
+
+              // Reset the form to its initial state
+              setFieldValue('firstName', '');
+              setFieldValue('lastName', '');
+              setFieldValue('sex', {
+                label: sexTypes.MALE,
+                value: sexTypes.MALE,
+              });
+              setFieldValue('birthDate', '');
+              setFieldValue('homeAddress', '');
+              setFieldValue('contactNumber', '');
+              setFieldValue('userType', {
+                label: userTypes.VISITOR,
+                value: userTypes.VISITOR,
+              });
+              setFieldValue('hasCellphone', {
+                label: 'No',
+                value: 'No',
+              });
+              setFieldValue('gpsDevice', {
+                label: 'Select...',
+                value: null,
+              });
+
+              // Then we reset the states
+              setIsRegisteringUser(false);
+              setFirstName('');
+              setLastName('');
+              setFoundUser(null);
+            }}
+          >
+            {({ errors, values, handleSubmit, setFieldValue }) => (
+              <form onSubmit={handleSubmit}>
+                {qrCode && (
+                  <div className={styles.Registration_qrCodeWrapper}>
+                    {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+                    <QRCode {...qrCode} />
+                    <button
+                      type="button"
+                      className={styles.Registration_qrCodeWrapper_removeQrCode}
+                      onClick={() => setQrCode(null)}
+                    >
+                      Remove Qr Code
+                    </button>
+                  </div>
+                )}
+
+                <Grid className={styles.Registration_withMargin}>
+                  <ControlledInput
+                    name="firstName"
+                    placeholder="First Name*"
+                    icon="person"
+                    value={values.firstName}
+                    error={errors.firstName}
+                    onChange={(e) => {
+                      setFirstName(e.target.value);
+                      setFieldValue('firstName', e.target.value);
+                    }}
+                  />
+
+                  <ControlledInput
+                    name="lastName"
+                    placeholder="Last Name*"
+                    icon="person"
+                    value={values.lastName}
+                    error={errors.lastName}
+                    onChange={(e) => {
+                      setLastName(e.target.value);
+                      setFieldValue('lastName', e.target.value);
+                    }}
+                  />
+                </Grid>
+                {!foundUser && (
+                  <>
+                    <Grid className={styles.Registration_withMargin}>
+                      <ControlledSelect
+                        options={[
+                          {
+                            label: sexTypes.MALE,
+                            value: sexTypes.MALE,
+                          },
+                          {
+                            label: sexTypes.FEMALE,
+                            value: sexTypes.FEMALE,
+                          },
+                        ]}
+                        name="sex"
+                        placeholder="Sex*"
+                        value={values.sex}
+                        error={errors.sex}
+                        onChange={(val) =>
+                          setFieldValue('sex', {
+                            label: val.label,
+                            value: val.value,
+                          })
+                        }
+                      />
+
+                      <DatePicker
+                        dateFormat="MM/dd/yyyy"
+                        selected={values.birthDate}
+                        placeholder="Birth Date*"
+                        name="birthDate"
+                        icon="today"
+                        error={errors.birthDate}
+                        onChange={(date) => {
+                          setFieldValue('birthDate', date);
+                        }}
+                      />
+                    </Grid>
+
+                    <ControlledInput
+                      className={styles.Registration_withMargin}
+                      name="homeAddress"
+                      placeholder="Home Address*"
+                      icon="home"
+                      value={values.homeAddress}
+                      error={errors.homeAddress}
+                      onChange={(e) =>
+                        setFieldValue('homeAddress', e.target.value)
+                      }
+                    />
+
+                    <ControlledInput
+                      className={styles.Registration_withMargin}
+                      name="contactNumber"
+                      placeholder="Contact Number*"
+                      icon="phone"
+                      value={values.contactNumber}
+                      error={errors.contactNumber}
+                      onChange={(e) =>
+                        setFieldValue('contactNumber', e.target.value)
+                      }
+                    />
+
                     <ControlledSelect
+                      className={styles.Registration_withMargin}
                       options={[
                         {
-                          label: sexTypes.MALE,
-                          value: sexTypes.MALE,
+                          label: userTypes.PERSONNEL,
+                          value: userTypes.PERSONNEL,
                         },
                         {
-                          label: sexTypes.FEMALE,
-                          value: sexTypes.FEMALE,
+                          label: userTypes.VISITOR,
+                          value: userTypes.VISITOR,
                         },
                       ]}
-                      name="sex"
-                      placeholder="Sex*"
-                      value={values.sex}
-                      error={errors.sex}
+                      name="userType"
+                      placeholder="User Type*"
+                      value={values.userType}
+                      error={errors.userType}
                       onChange={(val) =>
-                        setFieldValue('sex', {
+                        setFieldValue('userType', {
                           label: val.label,
                           value: val.value,
                         })
                       }
                     />
-
-                    <DatePicker
-                      dateFormat="MM/dd/yyyy"
-                      selected={values.birthDate}
-                      placeholder="Birth Date*"
-                      name="birthDate"
-                      icon="today"
-                      error={errors.birthDate}
-                      onChange={(date) => {
-                        setFieldValue('birthDate', date);
-                      }}
-                    />
-                  </Grid>
-
-                  <ControlledInput
-                    className={styles.Registration_withMargin}
-                    name="homeAddress"
-                    placeholder="Home Address*"
-                    icon="home"
-                    value={values.homeAddress}
-                    error={errors.homeAddress}
-                    onChange={(e) =>
-                      setFieldValue('homeAddress', e.target.value)
-                    }
-                  />
-
-                  <ControlledInput
-                    className={styles.Registration_withMargin}
-                    name="contactNumber"
-                    placeholder="Contact Number*"
-                    icon="phone"
-                    value={values.contactNumber}
-                    error={errors.contactNumber}
-                    onChange={(e) =>
-                      setFieldValue('contactNumber', e.target.value)
-                    }
-                  />
-
+                  </>
+                )}
+                <ControlledSelect
+                  className={styles.Registration_withMargin}
+                  // eslint-disable-next-line array-callback-return
+                  options={[
+                    {
+                      label: 'Yes',
+                      value: 'Yes',
+                    },
+                    {
+                      label: 'No',
+                      value: 'No',
+                    },
+                  ]}
+                  name="hasCellphone"
+                  placeholder="Has Cellphone?*"
+                  value={values.hasCellphone}
+                  error={errors.hasCellphone}
+                  onChange={(val) =>
+                    setFieldValue('hasCellphone', {
+                      label: val.label,
+                      value: val.value,
+                    })
+                  }
+                />
+                {values.hasCellphone.value === 'No' && (
                   <ControlledSelect
                     className={styles.Registration_withMargin}
-                    options={[
-                      {
-                        label: userTypes.PERSONNEL,
-                        value: userTypes.PERSONNEL,
-                      },
-                      {
-                        label: userTypes.VISITOR,
-                        value: userTypes.VISITOR,
-                      },
-                    ]}
-                    name="userType"
-                    placeholder="User Type*"
-                    value={values.userType}
-                    error={errors.userType}
+                    // eslint-disable-next-line array-callback-return
+                    options={gpsDevicesOptions}
+                    name="gpsDevice"
+                    placeholder="GPS Device*"
+                    value={values.gpsDevice}
+                    error={errors.gpsDevice}
                     onChange={(val) =>
-                      setFieldValue('userType', {
+                      setFieldValue('gpsDevice', {
                         label: val.label,
                         value: val.value,
                       })
                     }
                   />
-                </>
-              )}
+                )}
+                <div className={styles.Registration_buttonGroup}>
+                  <Button
+                    className={styles.Registration_buttonGroup_button}
+                    kind={buttonKinds.SUBMIT}
+                    icon="add"
+                    disabled={isRegisteringUser}
+                    onClick={() => {}}
+                  >
+                    <span
+                      className={styles.Registration_buttonGroup_buttonText}
+                    >
+                      {/* eslint-disable-next-line no-nested-ternary */}
+                      {foundUser
+                        ? values.hasCellphone.value === 'No'
+                          ? 'Assign GPS Device'
+                          : 'Generate QR Code'
+                        : 'Register User'}
+                      {isRegisteringUser && (
+                        <Spinner
+                          size={spinnerSizes.XS}
+                          colorName={colorNames.WHITE}
+                          className={styles.Registration_buttonGroup_spinner}
+                        />
+                      )}
+                    </span>
+                  </Button>
+                </div>
+              </form>
+            )}
+          </Formik>
+        </Card>
 
-              <ControlledSelect
-                className={styles.Registration_withMargin}
-                // eslint-disable-next-line array-callback-return
-                options={gpsDevicesOptions}
-                name="gpsDevice"
-                placeholder="GPS Device*"
-                value={values.gpsDevice}
-                error={errors.gpsDevice}
-                onChange={(val) =>
-                  setFieldValue('gpsDevice', {
-                    label: val.label,
-                    value: val.value,
-                  })
-                }
-              />
+        <Card className={styles.Registration_card}>
+          <Text
+            type={textTypes.HEADING.XS}
+            className={styles.Registration_title}
+          >
+            Vehicle Registration Form
+          </Text>
 
-              <div className={styles.Registration_buttonGroup}>
-                <Button
-                  className={styles.Registration_buttonGroup_button}
-                  kind={buttonKinds.SUBMIT}
-                  icon="add"
-                  disabled={isRegistering}
-                  onClick={() => {}}
-                >
-                  <span className={styles.Registration_buttonGroup_buttonText}>
-                    Register User
-                    {isRegistering && (
-                      <Spinner
-                        size={spinnerSizes.XS}
-                        colorName={colorNames.WHITE}
-                        className={styles.Registration_buttonGroup_spinner}
-                      />
-                    )}
-                  </span>
-                </Button>
-              </div>
-            </form>
-          )}
-        </Formik>
-      </Card>
+          <Formik
+            initialValues={{
+              userID: {
+                label: 'Select...',
+                value: null,
+              },
+              plateNumber: '',
+              color: '',
+              brand: '',
+              model: '',
+              gpsDevice: {
+                label: 'Select...',
+                value: null,
+              },
+            }}
+            onSubmit={async (values, { setErrors, setFieldValue }) => {
+              const errors = validateVehicle(values);
+              if (!isEmpty(errors)) {
+                setErrors(errors);
+                return;
+              }
+
+              setIsRegisteringVehicle(true);
+
+              const vehicles =
+                JSON.parse(localStorage.getItem('vehicles')) || [];
+              if (!foundVehicle) {
+                const newVehicle = {
+                  id: Math.floor(Math.random() * Date.now()),
+                  userID: values.userID.value,
+                  plateNumber: values.plateNumber,
+                  brand: values.brand,
+                  model: values.model,
+                  color: values.color,
+                };
+
+                // Create new vehicle
+                localStorage.setItem(
+                  'vehicles',
+                  JSON.stringify([...vehicles, newVehicle])
+                );
+              }
+
+              // Then, we remove the gpsDeviceOption in the state
+              const gpsDeviceOptionIndex = gpsDevicesOptions.findIndex(
+                (gpsDeviceOption) =>
+                  gpsDeviceOption.value === values.gpsDevice.value
+              );
+
+              const newGpsDevicesOptions = [...gpsDevicesOptions];
+              if (gpsDeviceOptionIndex > -1) {
+                newGpsDevicesOptions.splice(gpsDeviceOptionIndex, 1);
+                setGpsDevicesOptions(newGpsDevicesOptions);
+              }
+
+              // Show a success alert
+              alert.success('Vehicle Registered');
+
+              // Reset the form to its initial state
+              setFieldValue('userID', {
+                label: 'Select...',
+                value: null,
+              });
+              setFieldValue('plateNumber', '');
+              setFieldValue('color', '');
+              setFieldValue('brand', '');
+              setFieldValue('model', '');
+              setFieldValue('gpsDevice', {
+                label: 'Select...',
+                value: null,
+              });
+
+              // Then we reset the states
+              setIsRegisteringVehicle(false);
+              setPlateNumber('');
+              setFoundVehicle(null);
+            }}
+          >
+            {({ errors, values, handleSubmit, setFieldValue }) => (
+              <form onSubmit={handleSubmit}>
+                <ControlledSelect
+                  className={styles.Registration_withMargin}
+                  options={JSON.parse(localStorage.getItem('users')).map(
+                    (u) => ({
+                      label: `${u.firstName} ${u.lastName}`,
+                      value: u.id,
+                    })
+                  )}
+                  name="userID"
+                  placeholder="Select a User*"
+                  value={values.userID}
+                  error={errors.userID}
+                  onChange={(val) =>
+                    setFieldValue('userID', {
+                      label: val.label,
+                      value: val.value,
+                    })
+                  }
+                />
+
+                <ControlledInput
+                  className={styles.Registration_withMargin}
+                  name="plateNumber"
+                  placeholder="Plate Number*"
+                  icon="pin"
+                  value={values.plateNumber}
+                  error={errors.plateNumber}
+                  onChange={(e) => {
+                    setPlateNumber(e.target.value);
+                    setFieldValue('plateNumber', e.target.value);
+                  }}
+                />
+
+                {!foundVehicle && (
+                  <>
+                    <ControlledInput
+                      className={styles.Registration_withMargin}
+                      name="color"
+                      placeholder="Color*"
+                      icon="palette"
+                      value={values.color}
+                      error={errors.color}
+                      onChange={(e) => {
+                        setFieldValue('color', e.target.value);
+                      }}
+                    />
+
+                    <ControlledInput
+                      className={styles.Registration_withMargin}
+                      name="brand"
+                      placeholder="Brand*"
+                      icon="branding_watermark"
+                      value={values.brand}
+                      error={errors.brand}
+                      onChange={(e) => {
+                        setFieldValue('brand', e.target.value);
+                      }}
+                    />
+
+                    <ControlledInput
+                      className={styles.Registration_withMargin}
+                      name="model"
+                      placeholder="Model*"
+                      icon="model_training"
+                      value={values.model}
+                      error={errors.model}
+                      onChange={(e) => {
+                        setFieldValue('model', e.target.value);
+                      }}
+                    />
+                  </>
+                )}
+
+                <ControlledSelect
+                  className={styles.Registration_withMargin}
+                  // eslint-disable-next-line array-callback-return
+                  options={gpsDevicesOptions}
+                  name="gpsDevice"
+                  placeholder="GPS Device*"
+                  value={values.gpsDevice}
+                  error={errors.gpsDevice}
+                  onChange={(val) =>
+                    setFieldValue('gpsDevice', {
+                      label: val.label,
+                      value: val.value,
+                    })
+                  }
+                />
+
+                <div className={styles.Registration_buttonGroup}>
+                  <Button
+                    className={styles.Registration_buttonGroup_button}
+                    kind={buttonKinds.SUBMIT}
+                    icon="add"
+                    disabled={isRegisteringVehicle}
+                    onClick={() => {}}
+                  >
+                    <span
+                      className={styles.Registration_buttonGroup_buttonText}
+                    >
+                      Register Vehicle
+                      {isRegisteringVehicle && (
+                        <Spinner
+                          size={spinnerSizes.XS}
+                          colorName={colorNames.WHITE}
+                          className={styles.Registration_buttonGroup_spinner}
+                        />
+                      )}
+                    </span>
+                  </Button>
+                </div>
+              </form>
+            )}
+          </Formik>
+        </Card>
+      </Grid>
     </div>
   );
 };

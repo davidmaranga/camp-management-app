@@ -27,3 +27,22 @@ body {
 #root {
   height: 100%;
 }
+
+// DataTable
+.data-table-extensions {
+  margin-bottom: 10px;
+  padding: 0;
+}
+
+.data-table-extensions > .data-table-extensions-filter {
+  align-items: center;
+  display: flex;
+  float: right;
+}
+
+.data-table-extensions > .data-table-extensions-filter > .filter-text {
+  border: 1px solid $neutral-300 !important;
+  border-radius: 4px;
+  margin-left: 10px;
+  padding: 8px;
+}
