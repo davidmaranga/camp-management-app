@@ -9,9 +9,9 @@ mapboxgl.accessToken =
 const Map3D = () => {
   const mapContainer = useRef(null);
   const map = useRef(null);
-  const [lng, setLng] = useState(121.05398662456394);
-  const [lat, setLat] = useState(14.607236772149098);
-  const [zoom, setZoom] = useState(15.4);
+  const [lng, setLng] = useState(121.053523);
+  const [lat, setLat] = useState(14.607653);
+  const [zoom, setZoom] = useState(16.0);
   const bounds = [
     [121.04665882953464, 14.603769139644442],
     [121.0613144195919, 14.610704349961054],
@@ -22,10 +22,10 @@ const Map3D = () => {
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       // style: 'mapbox://styles/son0fanton/ckucmdm5j0t4g18rzvcqe0phs',
-      style: 'mapbox://styles/son0fanton/ckudvm47ha33518npspwv4dqx',
+      style: 'mapbox://styles/son0fanton/ckugwm27x5xjs18rxg9gv3fnb',
       center: [lng, lat],
-      pitch: 30,
-      bearing: 240.6,
+      pitch: 49.62,
+      bearing: -145.33,
       zoom,
       maxBounds: bounds, // create boundaries
       antialias: true,
@@ -39,43 +39,43 @@ const Map3D = () => {
         (layer) => layer.type === 'symbol' && layer.layout['text-field']
       ).id;
 
-      map.current.addLayer(
-        {
-          id: 'add-3d-buildings',
-          source: 'composite',
-          'source-layer': 'building',
-          filter: ['==', 'extrude', 'true'],
-          type: 'fill-extrusion',
-          minzoom: 15,
-          paint: {
-            'fill-extrusion-color': '#aaa',
+      // map.current.addLayer(
+      //   {
+      //     id: 'add-3d-buildings',
+      //     source: 'composite',
+      //     'source-layer': 'building',
+      //     filter: ['==', 'extrude', 'true'],
+      //     type: 'fill-extrusion',
+      //     minzoom: 15,
+      //     paint: {
+      //       'fill-extrusion-color': '#aaa',
 
-            // Use an 'interpolate' expression to
-            // add a smooth transition effect to
-            // the buildings as the user zooms in.
-            'fill-extrusion-height': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              15,
-              0,
-              15.05,
-              ['get', 'height'],
-            ],
-            'fill-extrusion-base': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              15,
-              0,
-              15.05,
-              ['get', 'min_height'],
-            ],
-            'fill-extrusion-opacity': 0.6,
-          },
-        },
-        labelLayerId
-      );
+      //       // Use an 'interpolate' expression to
+      //       // add a smooth transition effect to
+      //       // the buildings as the user zooms in.
+      //       'fill-extrusion-height': [
+      //         'interpolate',
+      //         ['linear'],
+      //         ['zoom'],
+      //         15,
+      //         0,
+      //         15.05,
+      //         ['get', 'height'],
+      //       ],
+      //       'fill-extrusion-base': [
+      //         'interpolate',
+      //         ['linear'],
+      //         ['zoom'],
+      //         15,
+      //         0,
+      //         15.05,
+      //         ['get', 'min_height'],
+      //       ],
+      //       'fill-extrusion-opacity': 0.6,
+      //     },
+      //   },
+      //   labelLayerId
+      // );
 
       map.current.addSource('mainWrapperSource', {
         type: 'geojson',
@@ -125,7 +125,7 @@ const Map3D = () => {
         longi -= 0.0000025001024;
         const geojson = await dataLocation(map, lati, longi);
         map.current.getSource('userPin').setData(geojson);
-      }, 900);
+      }, 100);
 
       map.current.addLayer({
         id: 'mainWrapper',

@@ -1,8 +1,8 @@
 async function dataLocation(map, lat, long) {
-  //   map.current.flyTo({
-  //     center: [long, lat],
-  //     speed: 0.5,
-  //   });
+  // map.current.flyTo({
+  //   center: [long, lat],
+  //   speed: 0.5,
+  // });
 
   return {
     type: 'FeatureCollection',
