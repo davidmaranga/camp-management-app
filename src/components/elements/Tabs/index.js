@@ -3,13 +3,14 @@ import cn from 'classnames';
 import PropTypes from 'prop-types';
 import styles from './styles.module.scss';
 
+import { Icon } from '..';
 import { tabTypes } from '../../../globals';
 
 import TabButton from './TabButton';
 
 const Tabs = ({ type, activeTab, tabs, className, tabClassName }) => (
   <div className={cn(className, styles[`Tabs___${type}`])}>
-    {tabs?.map(({ name, value, action, closeAction, id }) => (
+    {tabs?.map(({ icon, name, value, action, closeAction, id }) => (
       <TabButton
         key={value}
         className={cn(styles.Tabs_button, tabClassName)}
@@ -21,6 +22,7 @@ const Tabs = ({ type, activeTab, tabs, className, tabClassName }) => (
           type === tabTypes.HORIZONTAL.SM && closeAction ? closeAction : null
         }
       >
+        <Icon icon={icon} className={styles.Tabs_icon} />
         {name}
       </TabButton>
     ))}
@@ -44,6 +46,7 @@ Tabs.propTypes = {
   ]).isRequired,
   tabs: PropTypes.arrayOf(
     PropTypes.shape({
+      icon: PropTypes.string,
       name: PropTypes.string.isRequired,
       value: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
         .isRequired,
