@@ -4,6 +4,16 @@
     text-transform: capitalize;
   }
 
+  &_button {
+    align-items: center;
+    display: flex;
+  }
+
+  &_icon {
+    font-size: 1.2rem;
+    margin-right: 10px;
+  }
+
   &___horizontal___lg,
   &___horizontal___sm {
     display: flex;

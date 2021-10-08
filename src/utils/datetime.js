@@ -3,9 +3,7 @@ import dateFormat from 'dateformat';
 export const convertTimestampToDate = (timestamp) => {
   if (!timestamp) return undefined;
 
-  // Timestamp is in seconds, and new Date() only accepts
-  // timestamps in milliseconds. So, we multiply 1000 to it.
-  const date = new Date(timestamp * 1000);
+  const date = new Date(timestamp);
 
   return dateFormat(date, 'mm/dd/yyyy');
 };

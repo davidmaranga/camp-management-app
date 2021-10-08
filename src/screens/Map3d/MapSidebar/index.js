@@ -214,7 +214,6 @@ const MapSidebar = () => {
         type={tabTypes.VERTICAL.LG}
         tabs={[
           {
-            icon: mapTabs.DASHBOARD.icon,
             name: mapTabs.DASHBOARD.name,
             value: mapTabs.DASHBOARD.value,
             action: () => {
@@ -222,7 +221,6 @@ const MapSidebar = () => {
             },
           },
           {
-            icon: mapTabs.USERS.icon,
             name: mapTabs.USERS.name,
             value: mapTabs.USERS.value,
             action: () => {
@@ -230,7 +228,6 @@ const MapSidebar = () => {
             },
           },
           {
-            icon: mapTabs.VEHICLES.icon,
             name: mapTabs.VEHICLES.name,
             value: mapTabs.VEHICLES.value,
             action: () => {
@@ -238,7 +235,6 @@ const MapSidebar = () => {
             },
           },
           {
-            icon: mapTabs.GPS_DEVICES.icon,
             name: mapTabs.GPS_DEVICES.name,
             value: mapTabs.GPS_DEVICES.value,
             action: () => {
