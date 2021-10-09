@@ -46,3 +46,13 @@ body {
   margin-left: 10px;
   padding: 8px;
 }
+
+// Mapbox
+.mapboxgl-popup-content {
+  min-width: 200px;
+}
+
+.mapboxgl-popup-content p {
+  font-size: 0.8rem;
+  margin: 0;
+}
