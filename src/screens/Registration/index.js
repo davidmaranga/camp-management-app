@@ -135,7 +135,7 @@ const Registration = () => {
     const options = [];
 
     gpsDevices.forEach((gpsDevice) => {
-      if (!gpsDevice.isAssigned) {
+      if (!gpsDevice.userID) {
         options.push({
           label: gpsDevice.id,
           value: gpsDevice.id,
@@ -161,7 +161,7 @@ const Registration = () => {
               label: sexTypes.MALE,
               value: sexTypes.MALE,
             },
-            birthDate: '',
+            birthDate: null,
             homeAddress: '',
             contactNumber: '',
             userType: {
@@ -212,7 +212,7 @@ const Registration = () => {
                 homeAddress: values.homeAddress,
                 contactNumber: values.contactNumber,
                 userType: values.userType.value,
-                dateRegistered: Math.floor(Date.now() / 1000),
+                dateRegistered: new Date(),
               };
 
               updateUsers([...users, newUser]);
@@ -247,6 +247,11 @@ const Registration = () => {
               intendedOfficesToVisit,
             };
 
+            let gpsDevicesOptionsCopy = JSON.parse(
+              JSON.stringify(gpsDevicesOptions)
+            );
+            const gpsDevicesCopy = JSON.parse(JSON.stringify(gpsDevices));
+
             if (values.hasVehicle.value === 'Yes') {
               // Create vehicle location
               const dummyVehiclePoint = randomPointInPoly(outerWrapperGeoJson);
@@ -273,29 +278,22 @@ const Registration = () => {
 
               // Then, we remove the gpsDeviceOption selected for
               // vehicleGpsDevice in the state
-              const gpsDeviceOptionIndex = gpsDevicesOptions.findIndex(
-                (gpsDeviceOption) =>
-                  gpsDeviceOption.value === values.vehicleGpsDevice.value
+              const newGpsDevicesOptions = gpsDevicesOptionsCopy.filter(
+                (option) => option.value !== values.vehicleGpsDevice.value
               );
-
-              const newGpsDevicesOptions = [...gpsDevicesOptions];
-              if (gpsDeviceOptionIndex > -1) {
-                newGpsDevicesOptions.splice(gpsDeviceOptionIndex, 1);
-                setGpsDevicesOptions(newGpsDevicesOptions);
-              }
+              gpsDevicesOptionsCopy = newGpsDevicesOptions;
+              setGpsDevicesOptions(newGpsDevicesOptions);
 
               // Then we update the assignedID and type of that gpsDevice
               // in the state and localstorage
-              const gpsDeviceIndex = gpsDevices.findIndex(
-                (gpsDevice) => gpsDevice.id === values.vehicleGpsDevice.value
+              const matchedGpsDevice = gpsDevicesCopy.find(
+                (device) => device.id === values.vehicleGpsDevice.value
               );
-              const newGpsDevices = [...gpsDevices];
-              if (gpsDeviceOptionIndex > -1) {
-                newGpsDevices[gpsDeviceIndex].userID = id;
-                newGpsDevices[gpsDeviceIndex].type = 'Vehicle';
 
-                updateGpsDevices(newGpsDevices);
-              }
+              matchedGpsDevice.userID = id;
+              matchedGpsDevice.type = 'Vehicle';
+
+              updateGpsDevices(gpsDevicesCopy);
             }
 
             updateHistories([...histories, newHistory]);
@@ -305,29 +303,22 @@ const Registration = () => {
             if (values.hasCellphone.value === 'No') {
               // So, we remove the gpsDeviceOption selected for
               // userGpsDevice in the state
-              const gpsDeviceOptionIndex = gpsDevicesOptions.findIndex(
-                (gpsDeviceOption) =>
-                  gpsDeviceOption.value === values.userGpsDevice.value
+              const newGpsDevicesOptions = gpsDevicesOptionsCopy.filter(
+                (option) => option.value !== values.userGpsDevice.value
               );
-
-              const newGpsDevicesOptions = [...gpsDevicesOptions];
-              if (gpsDeviceOptionIndex > -1) {
-                newGpsDevicesOptions.splice(gpsDeviceOptionIndex, 1);
-                setGpsDevicesOptions(newGpsDevicesOptions);
-              }
+              gpsDevicesOptionsCopy = newGpsDevicesOptions;
+              setGpsDevicesOptions(newGpsDevicesOptions);
 
               // Then we update the assignedID and type of that gpsDevice
               // in the state and localstorage
-              const gpsDeviceIndex = gpsDevices.findIndex(
-                (gpsDevice) => gpsDevice.id === values.userGpsDevice.value
+              const matchedGpsDevice = gpsDevicesCopy.find(
+                (device) => device.id === values.userGpsDevice.value
               );
-              const newGpsDevices = [...gpsDevices];
-              if (gpsDeviceOptionIndex > -1) {
-                newGpsDevices[gpsDeviceIndex].userID = id;
-                newGpsDevices[gpsDeviceIndex].type = 'User';
 
-                updateGpsDevices(newGpsDevices);
-              }
+              matchedGpsDevice.userID = id;
+              matchedGpsDevice.type = 'User';
+
+              updateGpsDevices(gpsDevicesCopy);
             } else {
               // Show a qr code for scanning
               setQrCode({ value: 'http://facebook.github.io/react/' });
@@ -343,7 +334,7 @@ const Registration = () => {
               label: sexTypes.MALE,
               value: sexTypes.MALE,
             });
-            setFieldValue('birthDate', '');
+            setFieldValue('birthDate', null);
             setFieldValue('homeAddress', '');
             setFieldValue('contactNumber', '');
             setFieldValue('userType', {
