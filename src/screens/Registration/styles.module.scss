@@ -6,6 +6,7 @@
   &_card {
     padding: 30px;
     margin: 0 auto;
+    max-width: 600px;
     width: 100%
   }
 
@@ -14,10 +15,11 @@
   }
 
   &_withMargin {
-    margin-top: 20px;
+    margin-bottom: 15px;
   }
 
   &_qrCodeWrapper {
+    margin-bottom: 20px;
     text-align: center;
 
     &_removeQrCode {

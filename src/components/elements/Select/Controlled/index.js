@@ -10,10 +10,16 @@ import CustomSingleValue from '../custom/SingleValue';
 import CustomValueContainer from '../custom/ValueContainer';
 
 import { Text } from '../..';
-import { colorClasses, selectTypes, textTypes } from '../../../../globals';
+import {
+  colorClasses,
+  colorHexCodes,
+  selectTypes,
+  textTypes,
+} from '../../../../globals';
 
 const ControlledSelect = ({
   className,
+  innerClassName,
   options,
   isMulti,
   name,
@@ -32,15 +38,35 @@ const ControlledSelect = ({
       <Text
         className={styles.Select___slim_label}
         type={textTypes.BODY.MD}
-        colorClass={colorClasses.NEUTRAL['700']}
+        colorClass={colorClasses.NEUTRAL['500']}
       >
         {label}
       </Text>
     )}
 
     <Select
-      styles={formStyles}
-      className={className}
+      styles={{
+        ...formStyles,
+        control: (base, state) => ({
+          ...base,
+          backgroundColor: state.isDisabled
+            ? colorHexCodes.NEUTRAL['100']
+            : null,
+          borderRadius: '4px',
+          borderWidth: 1,
+          // eslint-disable-next-line no-nested-ternary
+          borderColor: error
+            ? colorHexCodes.RED['400']
+            : state.menuIsOpen
+            ? colorHexCodes.BLUE['300']
+            : colorHexCodes.NEUTRAL['300'],
+          boxShadow: null,
+          padding: '8px 14px',
+
+          '&:hover': {},
+        }),
+      }}
+      className={innerClassName}
       options={options}
       name={name}
       value={value}
@@ -89,7 +115,8 @@ const ControlledSelect = ({
 
 ControlledSelect.defaultProps = {
   className: null,
-  type: selectTypes.FORM,
+  innerClassName: null,
+  type: selectTypes.SLIM,
   label: null,
   value: null,
   isMulti: false,
@@ -102,6 +129,7 @@ ControlledSelect.defaultProps = {
 
 ControlledSelect.propTypes = {
   className: PropTypes.string,
+  innerClassName: PropTypes.string,
   options: PropTypes.arrayOf(
     PropTypes.shape({
       value: PropTypes.oneOfType([

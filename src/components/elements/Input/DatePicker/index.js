@@ -32,7 +32,7 @@ const DatePicker = ({
       <Text
         className={styles.Input___slim_label}
         type={textTypes.BODY.MD}
-        colorClass={colorClasses.NEUTRAL['700']}
+        colorClass={colorClasses.NEUTRAL['500']}
       >
         {label}
       </Text>
@@ -100,7 +100,7 @@ DatePicker.defaultProps = {
   className: null,
   inputClassName: null,
   label: null,
-  type: inputTypes.FORM,
+  type: inputTypes.SLIM,
   icon: null,
   selected: null,
   placeholder: null,
