@@ -12,8 +12,6 @@ import {
 
 const users = JSON.parse(localStorage.getItem('users')) || [];
 const histories = JSON.parse(localStorage.getItem('histories')) || [];
-const vehicles = JSON.parse(localStorage.getItem('vehicles')) || [];
-const gpsDevices = JSON.parse(localStorage.getItem('gpsDevices')) || [];
 
 const usersColumns = [
   {
@@ -60,35 +58,6 @@ const usersColumns = [
   },
 ];
 
-const vehiclesColumns = [
-  {
-    name: 'Owner First Name',
-    selector: (row) => row.ownerFirstName,
-    sortable: true,
-  },
-  {
-    name: 'Owner Last Name',
-    selector: (row) => row.ownerLastName,
-    sortable: true,
-  },
-  {
-    name: 'Plate Number',
-    selector: (row) => row.plateNumber,
-  },
-  {
-    name: 'Color',
-    selector: (row) => row.color,
-  },
-  {
-    name: 'Brand',
-    selector: (row) => row.brand,
-  },
-  {
-    name: 'Model',
-    selector: (row) => row.model,
-  },
-];
-
 const historyColumns = [
   {
     name: 'Date',
@@ -107,30 +76,7 @@ const historyColumns = [
   },
   {
     name: 'Plate Number',
-    selector: (row) => row.plateNumber,
-  },
-];
-
-const gpsDevicesColumns = [
-  {
-    name: 'ID',
-    selector: (row) => row.id,
-    sortable: true,
-  },
-  {
-    name: 'First Name',
-    selector: (row) => row.firstName,
-    sortable: true,
-  },
-  {
-    name: 'Last Name',
-    selector: (row) => row.lastName,
-    sortable: true,
-  },
-  {
-    name: 'Plate Number',
-    selector: (row) => row.plateNumber,
-    sortable: true,
+    selector: (row) => row?.plateNumber,
   },
 ];
 
@@ -144,7 +90,7 @@ users.forEach((user) => {
 
 const historiesData = [];
 histories.forEach((history) => {
-  const vehicle = vehicles.find((v) => v.id === history.vehicleID);
+  const vehicle = histories.find((v) => v.id === history.vehicleID);
 
   // Delete unneeded properties
   delete history.vehicleID;
@@ -156,51 +102,6 @@ histories.forEach((history) => {
     timeIn: convertTimestampToTimeWithSuffix(history.timeIn),
     timeOut: convertTimestampToTimeWithSuffix(history.timeOut),
     plateNumber: vehicle?.plateNumber ? vehicle.plateNumber : 'N/A',
-  });
-});
-
-const vehiclesData = [];
-vehicles.forEach(({ userID, plateNumber, color, brand, model }) => {
-  const user = users.find((u) => u.id === userID);
-
-  vehiclesData.push({
-    ownerFirstName: user.firstName,
-    ownerLastName: user.lastName,
-    plateNumber,
-    color,
-    brand,
-    model,
-  });
-});
-
-const gpsDevicesData = [];
-gpsDevices.forEach((gpsDevice) => {
-  let data = {};
-  if (gpsDevice.type === 'User') {
-    const user = users.find((u) => u.id === gpsDevice.assignedID);
-    data = {
-      firstName: user.firstName,
-      lastName: user.lastName,
-      plateNumber: 'N/A',
-    };
-  } else if (gpsDevice.type === 'Vehicle') {
-    const vehicle = vehicles.find((v) => v.id === gpsDevice.assignedID);
-    data = {
-      firstName: 'N/A',
-      lastName: 'N/A',
-      plateNumber: vehicle.plateNumber,
-    };
-  } else {
-    data = {
-      firstName: 'Not Assigned',
-      lastName: 'Not Assigned',
-      plateNumber: 'Not Assigned',
-    };
-  }
-
-  gpsDevicesData.push({
-    id: gpsDevice.id,
-    ...data,
   });
 });
 
@@ -274,30 +175,6 @@ const MapSidebar = () => {
                   />
                 )}
               />
-            </>
-          )}
-
-          {activeTab === mapTabs.VEHICLES.value && (
-            <>
-              <Text
-                type={textTypes.HEADING.XXS}
-                className={styles.MapSidebar_contents_title}
-              >
-                All Vehicles
-              </Text>
-              <DataTable columns={vehiclesColumns} data={vehiclesData} />
-            </>
-          )}
-
-          {activeTab === mapTabs.GPS_DEVICES.value && (
-            <>
-              <Text
-                type={textTypes.HEADING.XXS}
-                className={styles.MapSidebar_contents_title}
-              >
-                All GPS Devices
-              </Text>
-              <DataTable columns={gpsDevicesColumns} data={gpsDevicesData} />
             </>
           )}
         </div>

@@ -10,7 +10,7 @@ const formStyles = {
       ? colorHexCodes.BLUE['300']
       : colorHexCodes.NEUTRAL['300'],
     boxShadow: null,
-    padding: '12px 6px 5px 16px',
+    padding: '8px 14px',
 
     '&:hover': {},
   }),
@@ -35,7 +35,7 @@ const formStyles = {
   dropdownIndicator: (base) => ({
     ...base,
     color: colorHexCodes.NEUTRAL['500'],
-    padding: '4px 8px 12px',
+    padding: '0',
     svg: {
       height: '16px',
       width: '16px',

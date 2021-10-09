@@ -1,29 +1,33 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useContext, useState, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import styles from './styles.module.scss';
 
-import { checkIsInBuilding } from '../../utils/map';
+import { MapContext } from '../../contexts';
+import { checkIsInBounds, checkIsInBuilding, movePin } from '../../utils/map';
+import outerWrapperGeoJson from './constants/outerWrapperGeoJson';
 import MapSidebar from './MapSidebar';
 
+// Constants
 mapboxgl.accessToken =
   'pk.eyJ1Ijoic29uMGZhbnRvbiIsImEiOiJja3Vhb2k2YzQwaXB6Mm9vODl3YjA1ZTEyIn0.8a3KACJ4PHJ_rkkVVwg0yA';
-
-const users = JSON.parse(localStorage.getItem('users'));
-const vehicles = JSON.parse(localStorage.getItem('vehicles'));
+const lat = 14.607836772149098;
+const lng = 121.05398662456394;
+const zoom = 16;
 
 const Map = () => {
   const mapContainer = useRef(null);
   const map = useRef(null);
-  const [lng, setLng] = useState(121.05398662456394);
-  const [lat, setLat] = useState(14.607836772149098);
-  const [zoom, setZoom] = useState(16);
-  const [userLocations, setUserLocations] = useState(
-    JSON.parse(localStorage.getItem('userLocations'))
-  );
-  const [vehicleLocations, setVehicleLocations] = useState(
-    JSON.parse(localStorage.getItem('vehicleLocations'))
-  );
+  const {
+    users,
+    histories,
+    updateHistories,
+    userLocations,
+    updateUserLocations,
+    vehicleLocations,
+    updateVehicleLocations,
+  } = useContext(MapContext);
+  const [isSimulating, setIsSimulating] = useState(false);
 
   const generatePins = (locations) => {
     const pins = [];
@@ -33,10 +37,12 @@ const Map = () => {
       let icon = '';
       let description = '';
 
-      if (location.vehicleID) {
-        // This means the type of location given is a vehicle
-        // and not a user
-        const vehicle = vehicles.find((v) => v.id === location.vehicleID);
+      if (location.type === 'Vehicle') {
+        // Format for a vehicle pin
+        const userLatestHistory = histories
+          .filter((h) => h.userID === user.id)
+          .sort((a, b) => (a.date < b.date ? 1 : -1))[0];
+
         icon = 'vehicle';
         description = `
           <p>
@@ -49,21 +55,21 @@ const Map = () => {
           </p>
           <p>
             <strong>Plate Number:</strong>
-            ${vehicle.plateNumber}
+            ${userLatestHistory.plateNumber}
           </p>
           <p>
             <strong>Color:</strong>
-            ${vehicle.color}
+            ${userLatestHistory.color}
           </p>
           <p>
             <strong>Brand:</strong>
-            ${vehicle.brand}
+            ${userLatestHistory.brand}
           </p>
           <p>
             <strong>Model:</strong>
-            ${vehicle.model}
+            ${userLatestHistory.model}
           </p>
-          <p>  
+          <p>
             <strong>Is in:</strong>
             ${
               checkIsInBuilding(location.longitude, location.latitude) ||
@@ -72,7 +78,7 @@ const Map = () => {
           </p>
         `;
       } else {
-        // This means the type of location given is a user
+        // Format for a user pin
         icon = user.userType === 'Visitor' ? 'visitor' : 'in-national-2';
         description = `
           <p>  
@@ -113,35 +119,44 @@ const Map = () => {
     return pins;
   };
 
-  const movePin = (currentLat, currentLng) => {
-    const r = 10 / 111300; // = 100 meters
-    const y0 = currentLat;
-    const x0 = currentLng;
-    const u = Math.random();
-    const v = Math.random();
-    const w = r * Math.sqrt(u);
-    const t = 2 * Math.PI * v;
-    const x = w * Math.cos(t);
-    const y1 = w * Math.sin(t);
-    const x1 = x / Math.cos(y0);
-
-    return { newLat: y0 + y1, newLng: x0 + x1 };
-  };
-
   const simulate = () => {
-    const userLocationsCopy = JSON.parse(JSON.stringify(userLocations));
-    const vehicleLocationsCopy = JSON.parse(JSON.stringify(vehicleLocations));
+    setIsSimulating(true);
+
+    let userLocationsCopy = JSON.parse(JSON.stringify(userLocations));
+    let vehicleLocationsCopy = JSON.parse(JSON.stringify(vehicleLocations));
 
     // Update each of their latitude and longitude randomly
     let times = 0;
     const simulateId = setInterval(() => {
+      const finalUserLocations = [];
+      const finalVehicleLocations = [];
+
       userLocationsCopy.forEach((userLocation) => {
         const newCoords = movePin(
           userLocation.latitude,
           userLocation.longitude
         );
+
         userLocation.latitude = newCoords.newLat;
         userLocation.longitude = newCoords.newLng;
+
+        if (
+          checkIsInBounds(
+            userLocation.longitude,
+            userLocation.latitude,
+            outerWrapperGeoJson
+          )
+        ) {
+          finalUserLocations.push(userLocation);
+        } else {
+          // Update latest history of user
+          const historiesCopy = JSON.parse(JSON.stringify(histories));
+          const retrievedHistory = historiesCopy.find(
+            (h) => h.userID === userLocation.userID
+          );
+          retrievedHistory.timeOut = Math.floor(Date.now() / 1000);
+          updateHistories(historiesCopy);
+        }
       });
 
       vehicleLocationsCopy.forEach((vehicleLocation) => {
@@ -149,13 +164,24 @@ const Map = () => {
           vehicleLocation.latitude,
           vehicleLocation.longitude
         );
+
         vehicleLocation.latitude = newCoords.newLat;
         vehicleLocation.longitude = newCoords.newLng;
+
+        if (
+          checkIsInBounds(
+            vehicleLocation.longitude,
+            vehicleLocation.latitude,
+            outerWrapperGeoJson
+          )
+        ) {
+          finalVehicleLocations.push(vehicleLocation);
+        }
       });
 
       const newPins = generatePins([
-        ...userLocationsCopy,
-        ...vehicleLocationsCopy,
+        ...finalUserLocations,
+        ...finalVehicleLocations,
       ]);
 
       map.current.getSource('pins').setData({
@@ -163,18 +189,22 @@ const Map = () => {
         features: newPins,
       });
 
+      userLocationsCopy = JSON.parse(JSON.stringify(finalUserLocations));
+      vehicleLocationsCopy = JSON.parse(JSON.stringify(finalVehicleLocations));
+
       // Proceed 5 times only
       if (++times === 5) {
-        setUserLocations(userLocationsCopy);
-        setVehicleLocations(vehicleLocationsCopy);
+        updateUserLocations(finalUserLocations);
+        updateVehicleLocations(finalVehicleLocations);
 
+        setIsSimulating(false);
         clearInterval(simulateId);
       }
     }, 1000);
   };
 
   useEffect(() => {
-    if (map.current) return; // initialize map only once
+    if (map.current) return; // Initialize map only once
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/son0fanton/ckui592l7eu9p17qiy1rd6t2j',
@@ -185,24 +215,10 @@ const Map = () => {
     });
 
     map.current.on('load', () => {
-      // OUTER BOX
+      // Outer Box
       map.current.addSource('outerWrapperSource', {
         type: 'geojson',
-        data: {
-          type: 'Feature',
-          geometry: {
-            type: 'Polygon',
-            coordinates: [
-              [
-                [121.05020916725448, 14.609554652165913],
-                [121.05192327832602, 14.604771371932427],
-                [121.0567453066866, 14.606562170136694],
-                [121.05484620329813, 14.610741014344544],
-                [121.05020916725448, 14.609554652165913],
-              ],
-            ],
-          },
-        },
+        data: outerWrapperGeoJson,
       });
       map.current.addLayer({
         id: 'outerWrapperOutline',
@@ -215,13 +231,10 @@ const Map = () => {
         },
       });
 
-      // GENERATE PINS
+      // Generate Pins
       const pins = generatePins([...userLocations, ...vehicleLocations]);
 
       map.current.addSource('pins', {
-        // This GeoJSON contains features that include an "icon"
-        // property. The value of the "icon" property corresponds
-        // to an image in the Mapbox Streets style's sprite.
         type: 'geojson',
         data: {
           type: 'FeatureCollection',
@@ -229,7 +242,7 @@ const Map = () => {
         },
       });
 
-      // Add a layer showing the places.
+      // Add a layer showing the pins.
       map.current.addLayer({
         id: 'pins',
         type: 'symbol',
@@ -241,8 +254,6 @@ const Map = () => {
         },
       });
 
-      // When a click event occurs on a feature in the places layer, open a popup at the
-      // location of the feature, with description HTML from its properties.
       map.current.on('click', 'pins', (e) => {
         // Copy coordinates array.
         const coordinates = e.features[0].geometry.coordinates.slice();
@@ -275,7 +286,7 @@ const Map = () => {
 
   return (
     <div className={styles.Map}>
-      <MapSidebar simulate={simulate} />
+      <MapSidebar simulate={simulate} isSimulating={isSimulating} />
 
       <div ref={mapContainer} className={styles.Map_container} />
     </div>

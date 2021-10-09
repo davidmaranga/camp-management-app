@@ -36,7 +36,7 @@ const ControlledInput = ({
       <Text
         className={styles.Input___slim_label}
         type={textTypes.BODY.MD}
-        colorClass={colorClasses.NEUTRAL['700']}
+        colorClass={colorClasses.NEUTRAL['500']}
       >
         {label}
       </Text>
@@ -106,7 +106,7 @@ const ControlledInput = ({
 );
 
 ControlledInput.defaultProps = {
-  type: inputTypes.FORM,
+  type: inputTypes.SLIM,
   kind: inputKinds.TEXT,
   className: null,
   placeholder: null,
