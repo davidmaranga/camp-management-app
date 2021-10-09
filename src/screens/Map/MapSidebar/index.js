@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import styles from './styles.module.scss';
 
 import { DataTable } from '../../../components';
-import { IconButton, Tabs, Text } from '../../../components/elements';
+import { Button, IconButton, Tabs, Text } from '../../../components/elements';
 import { tabTypes, textTypes } from '../../../globals';
 import { mapTabs } from './constants';
 import {
@@ -136,9 +137,15 @@ const gpsDevicesColumns = [
 
 const usersData = [];
 users.forEach((user) => {
+  const userLatestHistory = histories
+    .filter((h) => h.userID === user.id)
+    .sort((a, b) => (a.date < b.date ? 1 : -1))[0];
+
   usersData.push({
     ...user,
     dateRegistered: convertTimestampToDate(user.dateRegistered),
+    isActive:
+      userLatestHistory.timeIn && !userLatestHistory.timeOut ? 'Yes' : 'No',
   });
 });
 
@@ -204,110 +211,128 @@ gpsDevices.forEach((gpsDevice) => {
   });
 });
 
-const MapSidebar = () => {
+const MapSidebar = ({ simulate }) => {
   const [activeTab, setActiveTab] = useState(null);
 
   return (
-    <div className={styles.MapSidebar}>
-      <Tabs
-        className={styles.MapSidebar_tabs}
-        type={tabTypes.VERTICAL.LG}
-        tabs={[
-          {
-            icon: mapTabs.DASHBOARD.icon,
-            name: mapTabs.DASHBOARD.name,
-            value: mapTabs.DASHBOARD.value,
-            action: () => {
-              setActiveTab(mapTabs.DASHBOARD.value);
+    <>
+      <div className={styles.MapSidebar}>
+        <Tabs
+          className={styles.MapSidebar_tabs}
+          type={tabTypes.VERTICAL.LG}
+          tabs={[
+            {
+              icon: mapTabs.DASHBOARD.icon,
+              name: mapTabs.DASHBOARD.name,
+              value: mapTabs.DASHBOARD.value,
+              action: () => {
+                setActiveTab(mapTabs.DASHBOARD.value);
+              },
             },
-          },
-          {
-            icon: mapTabs.USERS.icon,
-            name: mapTabs.USERS.name,
-            value: mapTabs.USERS.value,
-            action: () => {
-              setActiveTab(mapTabs.USERS.value);
+            {
+              icon: mapTabs.USERS.icon,
+              name: mapTabs.USERS.name,
+              value: mapTabs.USERS.value,
+              action: () => {
+                setActiveTab(mapTabs.USERS.value);
+              },
             },
-          },
-          {
-            icon: mapTabs.VEHICLES.icon,
-            name: mapTabs.VEHICLES.name,
-            value: mapTabs.VEHICLES.value,
-            action: () => {
-              setActiveTab(mapTabs.VEHICLES.value);
+            {
+              icon: mapTabs.VEHICLES.icon,
+              name: mapTabs.VEHICLES.name,
+              value: mapTabs.VEHICLES.value,
+              action: () => {
+                setActiveTab(mapTabs.VEHICLES.value);
+              },
             },
-          },
-          {
-            icon: mapTabs.GPS_DEVICES.icon,
-            name: mapTabs.GPS_DEVICES.name,
-            value: mapTabs.GPS_DEVICES.value,
-            action: () => {
-              setActiveTab(mapTabs.GPS_DEVICES.value);
+            {
+              icon: mapTabs.GPS_DEVICES.icon,
+              name: mapTabs.GPS_DEVICES.name,
+              value: mapTabs.GPS_DEVICES.value,
+              action: () => {
+                setActiveTab(mapTabs.GPS_DEVICES.value);
+              },
             },
-          },
-        ]}
-        activeTab={activeTab}
-      />
+          ]}
+          activeTab={activeTab}
+        />
 
-      {activeTab !== null && (
-        <div className={styles.MapSidebar_contents}>
-          <IconButton
-            icon="close"
-            iconClassName={styles.MapSidebar_contents_closeButton_icon}
-            className={styles.MapSidebar_contents_closeButton}
-            onClick={() => setActiveTab(null)}
-          />
+        <Button
+          icon="view_in_ar"
+          className={styles.MapSidebar_simulateButton}
+          onClick={simulate}
+        >
+          Simulate
+        </Button>
+      </div>
 
-          {activeTab === mapTabs.DASHBOARD.value && <p>Dashboard</p>}
-          {activeTab === mapTabs.USERS.value && (
-            <>
-              <Text
-                type={textTypes.HEADING.XXS}
-                className={styles.MapSidebar_contents_title}
-              >
-                All Users
-              </Text>
-              <DataTable
-                columns={usersColumns}
-                data={usersData}
-                expandableRowsComponent={(row) => (
-                  <DataTable
-                    columns={historyColumns}
-                    data={historiesData.filter((h) => h.userID === row.data.id)}
-                    filter={false}
-                  />
-                )}
-              />
-            </>
-          )}
+      <>
+        {activeTab !== null && (
+          <div className={styles.MapSidebar_contents}>
+            <IconButton
+              icon="close"
+              iconClassName={styles.MapSidebar_contents_closeButton_icon}
+              className={styles.MapSidebar_contents_closeButton}
+              onClick={() => setActiveTab(null)}
+            />
 
-          {activeTab === mapTabs.VEHICLES.value && (
-            <>
-              <Text
-                type={textTypes.HEADING.XXS}
-                className={styles.MapSidebar_contents_title}
-              >
-                All Vehicles
-              </Text>
-              <DataTable columns={vehiclesColumns} data={vehiclesData} />
-            </>
-          )}
+            {activeTab === mapTabs.DASHBOARD.value && <p>Dashboard</p>}
+            {activeTab === mapTabs.USERS.value && (
+              <>
+                <Text
+                  type={textTypes.HEADING.XXS}
+                  className={styles.MapSidebar_contents_title}
+                >
+                  All Users
+                </Text>
+                <DataTable
+                  columns={usersColumns}
+                  data={usersData}
+                  expandableRowsComponent={(row) => (
+                    <DataTable
+                      columns={historyColumns}
+                      data={historiesData.filter(
+                        (h) => h.userID === row.data.id
+                      )}
+                      filter={false}
+                    />
+                  )}
+                />
+              </>
+            )}
 
-          {activeTab === mapTabs.GPS_DEVICES.value && (
-            <>
-              <Text
-                type={textTypes.HEADING.XXS}
-                className={styles.MapSidebar_contents_title}
-              >
-                All GPS Devices
-              </Text>
-              <DataTable columns={gpsDevicesColumns} data={gpsDevicesData} />
-            </>
-          )}
-        </div>
-      )}
-    </div>
+            {activeTab === mapTabs.VEHICLES.value && (
+              <>
+                <Text
+                  type={textTypes.HEADING.XXS}
+                  className={styles.MapSidebar_contents_title}
+                >
+                  All Vehicles
+                </Text>
+                <DataTable columns={vehiclesColumns} data={vehiclesData} />
+              </>
+            )}
+
+            {activeTab === mapTabs.GPS_DEVICES.value && (
+              <>
+                <Text
+                  type={textTypes.HEADING.XXS}
+                  className={styles.MapSidebar_contents_title}
+                >
+                  All GPS Devices
+                </Text>
+                <DataTable columns={gpsDevicesColumns} data={gpsDevicesData} />
+              </>
+            )}
+          </div>
+        )}
+      </>
+    </>
   );
+};
+
+MapSidebar.propTypes = {
+  simulate: PropTypes.func.isRequired,
 };
 
 export default MapSidebar;

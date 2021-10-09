@@ -4,11 +4,24 @@
   &_tabs {
     background-color: $neutral-0;
     border-radius: 10px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
     box-shadow: $shadow-normal;
     left: 20px;
     min-width: 200px;
+    padding-bottom: 40px;
     position: absolute;
     top: 20px;
+    z-index: 2;
+  }
+
+  &_simulateButton {
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+    left: 20px;
+    min-width: 200px;
+    position: absolute;
+    top: 250px;
     z-index: 2;
   }
 
