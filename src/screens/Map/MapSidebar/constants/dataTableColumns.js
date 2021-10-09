@@ -45,6 +45,11 @@ export const usersColumns = [
 
 export const historyColumns = [
   {
+    name: 'Action',
+    button: true,
+    cell: () => <button type="button">Logout</button>,
+  },
+  {
     name: 'Date',
     selector: (row) => row.date,
     sortable: true,

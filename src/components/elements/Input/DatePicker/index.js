@@ -53,6 +53,7 @@ const DatePicker = ({
       onBlur={onBlur}
       tabIndex={tabIndex}
       maxDate={disableFutureDates ? new Date() : undefined}
+      autoComplete="off"
     />
 
     {placeholder && type === inputTypes.FORM && (
