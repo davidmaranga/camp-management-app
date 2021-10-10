@@ -11,8 +11,8 @@ const MapContext = createContext({
   updateUserLocations: () => {},
   vehicleLocations: [],
   updateVehicleLocations: () => {},
-  warnings: [],
-  updateWarnings: () => {},
+  alertLocations: [],
+  updateAlertLocations: () => {},
 });
 
 export default MapContext;

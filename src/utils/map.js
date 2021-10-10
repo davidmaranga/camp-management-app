@@ -5,8 +5,6 @@ export const checkIsInBounds = (lng, lat, polyGeoJson) => {
   const pt = point([lng, lat]);
   const inside = booleanPointInPolygon(pt, polyGeoJson);
 
-  console.log(inside);
-
   return inside;
 };
 

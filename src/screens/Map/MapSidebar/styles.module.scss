@@ -51,7 +51,66 @@
     }
 
     &_title {
-      margin-bottom: 30px !important;
+      border-bottom: 1px solid $neutral-300;
+      margin-bottom: 20px !important;
+      padding-bottom: 20px;
+      text-transform: uppercase;
+    }
+
+    &_dashboardRow {
+      margin-bottom: 50px;
+
+      &_title {
+        margin-bottom: 20px !important;
+      }
+    }
+
+    &_dashboardCard {
+      box-shadow: $shadow-raised;
+      padding: 20px;
+
+      &_grid {
+        grid-template-columns: 1fr 0.3fr !important;
+      }
+
+      &_rightColumn {
+        text-align: right;
+      }
+
+      &_icon {
+        color: $neutral-0 !important;
+        font-size: 3.5rem !important;
+
+        &___green {
+          color: $green-400 !important;
+        }
+  
+        &___blue {
+          color: $blue-400 !important;
+        }
+  
+        &___red {
+          color: $red-400 !important;
+        }
+      }
+    }
+
+    &_logoutButton {
+      font-size: 0.9em !important;
+      padding: 8px 12px !important;
+    }
+
+    &_offices {
+      margin: 0;
+      padding: 0;
+      
+      &_list {
+        color: $red-400;
+
+        &___okay {
+          color: $green-400;
+        }
+      }
     }
   }
 }

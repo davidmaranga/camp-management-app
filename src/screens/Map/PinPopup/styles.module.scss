@@ -1,0 +1,27 @@
+@import '../../../scss/variables';
+
+.PinPopup {
+  &_grid {
+    grid-column-gap: 0 !important;
+
+    &_column {
+      border: 1px solid $neutral-300;
+      padding: 5px;
+    }
+
+    &_label {
+      font-weight: 700 !important;
+    }
+
+    &_value {
+      border-left: 0;
+    }
+
+    &_resolveButton {
+      padding: 4px 10px !important;
+      font-size: 0.9rem !important;
+      margin-top: 10px !important;
+      width: 100%;
+    }
+  }
+}
