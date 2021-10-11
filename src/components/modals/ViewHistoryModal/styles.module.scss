@@ -1,0 +1,23 @@
+@import '../../../scss/variables';
+
+.ViewHistoryModal {
+  min-height: 550px;
+
+  &_logoutButton {
+    font-size: 0.9em !important;
+    padding: 8px 12px !important;
+  }
+
+  &_offices {
+    margin: 0;
+    padding: 0;
+    
+    &_list {
+      color: $red-400;
+
+      &___okay {
+        color: $green-400;
+      }
+    }
+  }
+}

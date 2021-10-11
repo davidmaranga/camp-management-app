@@ -1,6 +1,7 @@
 const colorNames = {
+  GREEN: 'green',
   BLUE: 'blue',
-  WHITE: 'white',
+  RED: 'RED',
   GRAY: 'gray',
 };
 

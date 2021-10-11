@@ -10,6 +10,7 @@ import styles from './styles.module.scss';
 
 import {
   Button,
+  Checkbox,
   ControlledInput,
   ControlledSelect,
   Grid,
@@ -17,6 +18,7 @@ import {
   Spinner,
   Text,
 } from '../../components/elements';
+import { ConsentFormModal } from '../../components/modals';
 import { MapContext } from '../../contexts';
 import {
   buttonKinds,
@@ -26,8 +28,8 @@ import {
   spinnerSizes,
   userTypes,
 } from '../../globals';
-import outerWrapperGeoJson from '../Map/constants/outerWrapperGeoJson';
-import { buildingsCoordinates } from '../Map/MapSidebar/constants';
+import { outerWrapperGeoJson } from '../Map/constants';
+import { buildingsCoordinates } from '../Map/MapTabs/constants';
 import { randomPointInPoly } from '../../utils/map';
 
 const Registration = () => {
@@ -52,6 +54,7 @@ const Registration = () => {
   const [foundUser, setFoundUser] = useState(null);
   const [qrCode, setQrCode] = useState(null);
   const [gpsDevicesOptions, setGpsDevicesOptions] = useState([]);
+  const [showConsentFormModal, setShowConsentFormModal] = useState(false);
 
   const validate = (values) => {
     const errors = {};
@@ -118,6 +121,10 @@ const Registration = () => {
 
     if (!values.intendedOfficesToVisit) {
       errors.intendedOfficesToVisit = 'This field is required.';
+    }
+
+    if (!values.isSignedConsentForm) {
+      errors.isSignedConsentForm = 'You must agree to this to proceed.';
     }
 
     return errors;
@@ -208,6 +215,7 @@ const Registration = () => {
                   value: null,
                 },
                 intentedOfficesToVisit: null,
+                isSignedConsentForm: false,
               }}
               onSubmit={async (values, { setErrors, setFieldValue }) => {
                 const errors = validate(values);
@@ -698,6 +706,35 @@ const Registration = () => {
                     onChange={(val) =>
                       setFieldValue('intendedOfficesToVisit', val)
                     }
+                  />
+
+                  <Checkbox
+                    labelClassName={styles.Registration_container_form_checkbox}
+                    name="isSignedConsentForm"
+                    onChange={() =>
+                      setFieldValue(
+                        'isSignedConsentForm',
+                        !values.isSignedConsentForm
+                      )
+                    }
+                    error={errors.isSignedConsentForm}
+                    checked={values.isSignedConsentForm}
+                  >
+                    <Text>I agree to the terms and conditions stated</Text>
+                    <Button
+                      className={
+                        styles.Registration_container_form_checkboxButton
+                      }
+                      onClick={() => setShowConsentFormModal(true)}
+                    >
+                      here
+                    </Button>
+                    .
+                  </Checkbox>
+
+                  <ConsentFormModal
+                    isOpen={showConsentFormModal}
+                    handleClose={() => setShowConsentFormModal(false)}
                   />
                 </>
               )}
