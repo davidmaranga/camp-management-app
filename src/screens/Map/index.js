@@ -259,7 +259,7 @@ const Map = () => {
       center: [lng, lat],
       zoom,
       antialias: true,
-      interactive: false,
+      interactive: true,
     });
 
     map.current.on('load', () => {
@@ -301,7 +301,7 @@ const Map = () => {
         source: 'pins',
         layout: {
           'icon-image': '{icon}',
-          'icon-size': 0.4,
+          'icon-size': ['interpolate', ['linear'], ['zoom'], 10, 0.9, 16, 0.4], // 0.4
           'icon-allow-overlap': true,
         },
       });
