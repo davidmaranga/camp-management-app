@@ -1,5 +1,5 @@
 import { point, polygon, booleanPointInPolygon } from '@turf/turf';
-import { buildingsCoordinates } from '../screens/Map/MapSidebar/constants';
+import { buildingsCoordinates } from '../screens/Map/MapTabs/constants';
 
 export const checkIsInBounds = (lng, lat, polyGeoJson) => {
   const pt = point([lng, lat]);
@@ -40,7 +40,7 @@ export const checkIsInBuilding = (lng, lat) => {
   return null;
 };
 
-export const movePin = (currentLat, currentLng) => {
+export const movePin = (currentLng, currentLat) => {
   const r = 10 / 111300; // = 10 meters
   const y0 = currentLat;
   const x0 = currentLng;
@@ -52,5 +52,8 @@ export const movePin = (currentLat, currentLng) => {
   const y1 = w * Math.sin(t);
   const x1 = x / Math.cos(y0);
 
-  return { newLat: y0 + y1, newLng: x0 + x1 };
+  const newLat = y0 + y1;
+  const newLng = x0 + x1;
+
+  return { newLat, newLng };
 };

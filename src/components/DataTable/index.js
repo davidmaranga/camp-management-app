@@ -4,11 +4,21 @@ import ReactDataTable from 'react-data-table-component';
 import ReactDataTableExtensions from 'react-data-table-component-extensions';
 import 'react-data-table-component-extensions/dist/index.css';
 
+import { colorHexCodes } from '../../globals';
+
 const customStyles = {
+  headCells: {
+    style: {
+      backgroundColor: colorHexCodes.NEUTRAL['100'],
+      fontSize: 14,
+      fontWeight: 700,
+    },
+  },
   cells: {
     style: {
-      paddingTop: '12px',
-      paddingBottom: '12px',
+      fontSize: 14,
+      paddingTop: 5,
+      paddingBottom: 5,
     },
   },
   headCells: {
@@ -21,28 +31,25 @@ const customStyles = {
   },
 };
 
-const DataTable = ({ columns, data, filter, expandableRowsComponent }) => (
-  <ReactDataTableExtensions
-    {...{
-      columns,
-      data,
-    }}
-    defaultSortField="firstName"
-    defaultSortAsc={false}
-    export={false}
-    print={false}
-    filter={filter}
-  >
-    <ReactDataTable
-      highlightOnHover
-      pagination
-      dense
-      persistTableHead
-      expandableRows={!!expandableRowsComponent}
-      expandableRowsComponent={expandableRowsComponent}
-      customStyles={customStyles}
-    />
-  </ReactDataTableExtensions>
+const DataTable = ({ columns, data, filter }) => (
+  <div>
+    <ReactDataTableExtensions
+      {...{
+        columns,
+        data,
+      }}
+      export={false}
+      print={false}
+      filter={filter}
+    >
+      <ReactDataTable
+        highlightOnHover
+        pagination
+        persistTableHead
+        customStyles={customStyles}
+      />
+    </ReactDataTableExtensions>
+  </div>
 );
 
 DataTable.defaultProps = {
@@ -53,7 +60,6 @@ DataTable.propTypes = {
   columns: PropTypes.array.isRequired,
   data: PropTypes.array.isRequired,
   filter: PropTypes.bool,
-  expandableRowsComponent: PropTypes.func,
 };
 
 export default DataTable;

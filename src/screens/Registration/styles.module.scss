@@ -61,6 +61,19 @@
           padding: 5px 10px;
         }
       }
+
+      &_checkbox {
+        align-items: center;
+        display: flex;
+      }
+
+      &_checkboxButton {
+        background: none !important;
+        color: $blue-400 !important;
+        margin-left: 4px;
+        padding: 0 !important;
+        text-transform: lowercase;
+      }
     }
     
     &_footer {

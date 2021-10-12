@@ -5,6 +5,7 @@ import styles from './styles.module.scss';
 
 import { DataTable } from '../../../components';
 import {
+  Badge,
   Button,
   Card,
   Grid,
@@ -13,21 +14,28 @@ import {
   Tabs,
   Text,
 } from '../../../components/elements';
+import { ViewHistoryModal } from '../../../components/modals';
 import {
-  buttonTypes,
   colorClasses,
+  colorNames,
   gridTypes,
+  iconButtonTypes,
   tabTypes,
   textTypes,
 } from '../../../globals';
 import { MapContext } from '../../../contexts';
 import { mapTabs } from './constants';
-import {
-  convertTimestampToDate,
-  convertTimestampToTimeWithSuffix,
-} from '../../../utils/datetime';
+import { convertTimestampToDate } from '../../../utils/datetime';
 
-const MapSidebar = ({ simulate, isSimulating, generatePins, setPins }) => {
+const MapTabs = ({
+  activeTab,
+  setActiveTab,
+  simulate,
+  isSimulating,
+  generatePins,
+  setPins,
+  flyToLocation,
+}) => {
   const {
     users,
     histories,
@@ -41,12 +49,14 @@ const MapSidebar = ({ simulate, isSimulating, generatePins, setPins }) => {
     gpsDevices,
     updateGpsDevices,
   } = useContext(MapContext);
-  const [activeTab, setActiveTab] = useState(null);
+  const [historyUser, setHistoryUser] = useState(null);
 
   const logout = (userID) => {
     // 1.) Update latest history of user
     const historiesCopy = JSON.parse(JSON.stringify(histories));
-    const retrievedHistory = historiesCopy.find((h) => h.userID === userID);
+    const retrievedHistory = historiesCopy.filter(
+      (h) => !h.timeOut && h.userID === userID
+    )[0];
     retrievedHistory.timeOut = Math.floor(Date.now() / 1000);
     updateHistories(historiesCopy);
 
@@ -90,6 +100,23 @@ const MapSidebar = ({ simulate, isSimulating, generatePins, setPins }) => {
 
   const usersColumns = [
     {
+      name: 'Status',
+      button: true,
+      cell: (row) => (
+        <Badge
+          colorName={
+            row.status === 'Inactive' ? colorNames.GRAY : colorNames.GREEN
+          }
+          text={row.status}
+        />
+      ),
+    },
+    {
+      name: 'User Type',
+      selector: (row) => row.userType,
+      sortable: true,
+    },
+    {
       name: 'First Name',
       selector: (row) => row.firstName,
       sortable: true,
@@ -109,7 +136,7 @@ const MapSidebar = ({ simulate, isSimulating, generatePins, setPins }) => {
       selector: (row) => row.birthDate,
     },
     {
-      name: 'Home Address',
+      name: 'Address',
       selector: (row) => row.homeAddress,
     },
     {
@@ -117,6 +144,7 @@ const MapSidebar = ({ simulate, isSimulating, generatePins, setPins }) => {
       selector: (row) => row.contactNumber,
     },
     {
+<<<<<<< HEAD:src/screens/Map/MapSidebar/index.js
       name: 'User Type',
       selector: (row) => row.userType,
       sortable: true,
@@ -152,170 +180,71 @@ const MapSidebar = ({ simulate, isSimulating, generatePins, setPins }) => {
 
   const historyColumns = [
     {
+=======
+>>>>>>> 3c77bc115f01ee8c5bdf2461d810acc9f9526d46:src/screens/Map/MapTabs/index.js
       name: 'Action',
       button: true,
       cell: (row) => (
         <>
-          {row.timeOut === '-' ? (
-            <Button
-              className={styles.MapSidebar_contents_logoutButton}
-              type={buttonTypes.PRIMARY.RED}
-              onClick={() => logout(row.userID)}
-            >
-              Logout
-            </Button>
-          ) : (
-            '-'
+          <IconButton
+            icon="history"
+            type={iconButtonTypes.SOLID.SM}
+            iconClassName={styles.MapTabs_contents_viewHistoryButton}
+            onClick={() =>
+              setHistoryUser({
+                id: row.id,
+                firstName: row.firstName,
+                lastName: row.lastName,
+              })
+            }
+          />
+
+          {row.status === 'Active' && (
+            <IconButton
+              icon="near_me"
+              type={iconButtonTypes.SOLID.SM}
+              iconClassName={styles.MapTabs_contents_viewLocationButton}
+              onClick={() => flyToLocation(row.id)}
+            />
           )}
         </>
       ),
-    },
-    {
-      name: 'Date',
-      selector: (row) => row.date,
-      sortable: true,
-    },
-    {
-      name: 'Time In',
-      selector: (row) => row.timeIn,
-      sortable: true,
-    },
-    {
-      name: 'Time Out',
-      selector: (row) => row.timeOut,
-      sortable: true,
-    },
-    {
-      name: 'Intended Offices to Visit',
-      selector: (row) => row.intendedOfficesToVisit,
-      minWidth: '200px',
-      cell: (row) => (
-        <ul className={styles.MapSidebar_contents_offices}>
-          {row.intendedOfficesToVisit.map((office, i) => (
-            <li
-              key={i}
-              className={cn(styles.MapSidebar_contents_offices_list, {
-                [styles.MapSidebar_contents_offices_list___okay]:
-                  row.officesVisited.find(
-                    (officeVisited) => officeVisited === office
-                  ),
-              })}
-            >
-              {office}
-            </li>
-          ))}
-        </ul>
-      ),
-    },
-    {
-      name: 'Offices Visited',
-      selector: (row) => row.officesVisited,
-      minWidth: '150px',
-      cell: (row) => (
-        <>
-          {row.officesVisited.length ? (
-            <ul className={styles.MapSidebar_contents_offices}>
-              {row.officesVisited.map((office, i) => (
-                <li
-                  key={i}
-                  className={cn(styles.MapSidebar_contents_offices_list, {
-                    [styles.MapSidebar_contents_offices_list___okay]:
-                      row.intendedOfficesToVisit.find(
-                        (intendedOffice) => intendedOffice === office
-                      ),
-                  })}
-                >
-                  {office}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            '-'
-          )}
-        </>
-      ),
-    },
-    {
-      name: 'User GPS Device',
-      selector: (row) => row.userGpsDevice,
-      minWidth: '150px',
-      sortable: true,
-    },
-    {
-      name: 'Vehicle GPS Device',
-      selector: (row) => row.vehicleGpsDevice,
-      minWidth: '180px',
-      sortable: true,
-    },
-    {
-      name: 'Plate Number',
-      selector: (row) => row.plateNumber,
-      minWidth: '120px',
-      sortable: true,
-    },
-    {
-      name: 'Color',
-      selector: (row) => row.color,
-      sortable: true,
-    },
-    {
-      name: 'Brand',
-      selector: (row) => row.brand,
-      sortable: true,
-    },
-    {
-      name: 'Model',
-      selector: (row) => row.model,
-      sortable: true,
     },
   ];
 
   // Format Users Data
-  const usersData = [];
-  users.forEach((user) => {
+  const activeUsersData = [];
+  const inActiveUsersData = [];
+  const sortedUsers = users.sort((a, b) =>
+    a.lastName.toLowerCase() > b.lastName.toLowerCase() ? 1 : -1
+  );
+  sortedUsers.forEach((user) => {
     const userLatestHistory = histories
       .filter((h) => h.userID === user.id)
       .sort((a, b) => (a.date < b.date ? 1 : -1))[0];
 
-    usersData.push({
+    const pushUser = {
       ...user,
       dateRegistered: convertTimestampToDate(user.dateRegistered),
       status:
         userLatestHistory?.timeIn && !userLatestHistory?.timeOut
           ? 'Active'
           : 'Inactive',
-    });
-  });
+    };
 
-  // Format Histories Data
-  const historiesData = [];
-  histories.forEach((history) => {
-    // Push updated history
-    historiesData.push({
-      ...history,
-      date: convertTimestampToDate(history?.date),
-      timeIn: convertTimestampToTimeWithSuffix(history?.timeIn),
-      timeOut: history?.timeOut
-        ? convertTimestampToTimeWithSuffix(history?.timeOut)
-        : '-',
-      intendedOfficesToVisit: history?.intendedOfficesToVisit,
-      officesVisited: history?.officesVisited ? history?.officesVisited : [],
-      userGpsDevice: history?.userGpsDevice ? history?.userGpsDevice : [],
-      vehicleGpsDevice: history?.vehicleGpsDevice
-        ? history?.vehicleGpsDevice
-        : '-',
-      plateNumber: history?.plateNumber ? history?.plateNumber : '-',
-      color: history?.color ? history?.color : '-',
-      brand: history?.brand ? history?.brand : '-',
-      model: history?.model ? history?.model : '-',
-    });
+    if (pushUser.status === 'Active') {
+      activeUsersData.push(pushUser);
+    } else {
+      inActiveUsersData.push(pushUser);
+    }
   });
+  const usersData = [...activeUsersData, ...inActiveUsersData];
 
   return (
     <>
-      <div className={styles.MapSidebar}>
+      <div className={styles.MapTabs}>
         <Tabs
-          className={styles.MapSidebar_tabs}
+          className={styles.MapTabs_tabs}
           type={tabTypes.VERTICAL.LG}
           tabs={[
             {
@@ -340,7 +269,7 @@ const MapSidebar = ({ simulate, isSimulating, generatePins, setPins }) => {
 
         <Button
           icon="view_in_ar"
-          className={styles.MapSidebar_simulateButton}
+          className={styles.MapTabs_simulateButton}
           onClick={simulate}
           disabled={isSimulating}
         >
@@ -350,11 +279,11 @@ const MapSidebar = ({ simulate, isSimulating, generatePins, setPins }) => {
 
       <>
         {activeTab !== null && (
-          <div className={styles.MapSidebar_contents}>
+          <div className={styles.MapTabs_contents}>
             <IconButton
               icon="close"
-              iconClassName={styles.MapSidebar_contents_closeButton_icon}
-              className={styles.MapSidebar_contents_closeButton}
+              iconClassName={styles.MapTabs_contents_closeButton_icon}
+              className={styles.MapTabs_contents_closeButton}
               onClick={() => setActiveTab(null)}
             />
 
@@ -362,29 +291,27 @@ const MapSidebar = ({ simulate, isSimulating, generatePins, setPins }) => {
               <>
                 <Text
                   type={textTypes.HEADING.XXS}
-                  className={styles.MapSidebar_contents_title}
+                  className={styles.MapTabs_contents_title}
                 >
                   Dashboard
                 </Text>
 
-                <div className={styles.MapSidebar_contents_dashboardRow}>
+                <div className={styles.MapTabs_contents_dashboardRow}>
                   <Text
                     type={textTypes.HEADING.XXS}
-                    className={styles.MapSidebar_contents_dashboardRow_title}
+                    className={styles.MapTabs_contents_dashboardRow_title}
                   >
                     Live Data
                   </Text>
 
                   <Grid type={gridTypes.THREE}>
-                    <Card className={styles.MapSidebar_contents_dashboardCard}>
+                    <Card className={styles.MapTabs_contents_dashboardCard}>
                       <Grid
-                        className={
-                          styles.MapSidebar_contents_dashboardCard_grid
-                        }
+                        className={styles.MapTabs_contents_dashboardCard_grid}
                       >
                         <div
                           className={
-                            styles.MapSidebar_contents_dashboardCard_leftColumn
+                            styles.MapTabs_contents_dashboardCard_leftColumn
                           }
                         >
                           <Text
@@ -403,29 +330,27 @@ const MapSidebar = ({ simulate, isSimulating, generatePins, setPins }) => {
 
                         <div
                           className={
-                            styles.MapSidebar_contents_dashboardCard_rightColumn
+                            styles.MapTabs_contents_dashboardCard_rightColumn
                           }
                         >
                           <Icon
                             icon="people"
                             className={cn(
-                              styles.MapSidebar_contents_dashboardCard_icon,
-                              styles.MapSidebar_contents_dashboardCard_icon___green
+                              styles.MapTabs_contents_dashboardCard_icon,
+                              styles.MapTabs_contents_dashboardCard_icon___green
                             )}
                           />
                         </div>
                       </Grid>
                     </Card>
 
-                    <Card className={styles.MapSidebar_contents_dashboardCard}>
+                    <Card className={styles.MapTabs_contents_dashboardCard}>
                       <Grid
-                        className={
-                          styles.MapSidebar_contents_dashboardCard_grid
-                        }
+                        className={styles.MapTabs_contents_dashboardCard_grid}
                       >
                         <div
                           className={
-                            styles.MapSidebar_contents_dashboardCard_leftColumn
+                            styles.MapTabs_contents_dashboardCard_leftColumn
                           }
                         >
                           <Text
@@ -444,29 +369,27 @@ const MapSidebar = ({ simulate, isSimulating, generatePins, setPins }) => {
 
                         <div
                           className={
-                            styles.MapSidebar_contents_dashboardCard_rightColumn
+                            styles.MapTabs_contents_dashboardCard_rightColumn
                           }
                         >
                           <Icon
                             icon="directions_car"
                             className={cn(
-                              styles.MapSidebar_contents_dashboardCard_icon,
-                              styles.MapSidebar_contents_dashboardCard_icon___blue
+                              styles.MapTabs_contents_dashboardCard_icon,
+                              styles.MapTabs_contents_dashboardCard_icon___blue
                             )}
                           />
                         </div>
                       </Grid>
                     </Card>
 
-                    <Card className={styles.MapSidebar_contents_dashboardCard}>
+                    <Card className={styles.MapTabs_contents_dashboardCard}>
                       <Grid
-                        className={
-                          styles.MapSidebar_contents_dashboardCard_grid
-                        }
+                        className={styles.MapTabs_contents_dashboardCard_grid}
                       >
                         <div
                           className={
-                            styles.MapSidebar_contents_dashboardCard_leftColumn
+                            styles.MapTabs_contents_dashboardCard_leftColumn
                           }
                         >
                           <Text
@@ -485,14 +408,14 @@ const MapSidebar = ({ simulate, isSimulating, generatePins, setPins }) => {
 
                         <div
                           className={
-                            styles.MapSidebar_contents_dashboardCard_rightColumn
+                            styles.MapTabs_contents_dashboardCard_rightColumn
                           }
                         >
                           <Icon
                             icon="warning"
                             className={cn(
-                              styles.MapSidebar_contents_dashboardCard_icon,
-                              styles.MapSidebar_contents_dashboardCard_icon___red
+                              styles.MapTabs_contents_dashboardCard_icon,
+                              styles.MapTabs_contents_dashboardCard_icon___red
                             )}
                           />
                         </div>
@@ -501,24 +424,22 @@ const MapSidebar = ({ simulate, isSimulating, generatePins, setPins }) => {
                   </Grid>
                 </div>
 
-                <div className={styles.MapSidebar_contents_dashboardRow}>
+                <div className={styles.MapTabs_contents_dashboardRow}>
                   <Text
                     type={textTypes.HEADING.XXS}
-                    className={styles.MapSidebar_contents_dashboardRow_title}
+                    className={styles.MapTabs_contents_dashboardRow_title}
                   >
                     Overall Data
                   </Text>
 
                   <Grid type={gridTypes.THREE}>
-                    <Card className={styles.MapSidebar_contents_dashboardCard}>
+                    <Card className={styles.MapTabs_contents_dashboardCard}>
                       <Grid
-                        className={
-                          styles.MapSidebar_contents_dashboardCard_grid
-                        }
+                        className={styles.MapTabs_contents_dashboardCard_grid}
                       >
                         <div
                           className={
-                            styles.MapSidebar_contents_dashboardCard_leftColumn
+                            styles.MapTabs_contents_dashboardCard_leftColumn
                           }
                         >
                           <Text
@@ -537,29 +458,27 @@ const MapSidebar = ({ simulate, isSimulating, generatePins, setPins }) => {
 
                         <div
                           className={
-                            styles.MapSidebar_contents_dashboardCard_rightColumn
+                            styles.MapTabs_contents_dashboardCard_rightColumn
                           }
                         >
                           <Icon
                             icon="people"
                             className={cn(
-                              styles.MapSidebar_contents_dashboardCard_icon,
-                              styles.MapSidebar_contents_dashboardCard_icon___green
+                              styles.MapTabs_contents_dashboardCard_icon,
+                              styles.MapTabs_contents_dashboardCard_icon___green
                             )}
                           />
                         </div>
                       </Grid>
                     </Card>
 
-                    <Card className={styles.MapSidebar_contents_dashboardCard}>
+                    <Card className={styles.MapTabs_contents_dashboardCard}>
                       <Grid
-                        className={
-                          styles.MapSidebar_contents_dashboardCard_grid
-                        }
+                        className={styles.MapTabs_contents_dashboardCard_grid}
                       >
                         <div
                           className={
-                            styles.MapSidebar_contents_dashboardCard_leftColumn
+                            styles.MapTabs_contents_dashboardCard_leftColumn
                           }
                         >
                           <Text
@@ -582,29 +501,27 @@ const MapSidebar = ({ simulate, isSimulating, generatePins, setPins }) => {
 
                         <div
                           className={
-                            styles.MapSidebar_contents_dashboardCard_rightColumn
+                            styles.MapTabs_contents_dashboardCard_rightColumn
                           }
                         >
                           <Icon
                             icon="badge"
                             className={cn(
-                              styles.MapSidebar_contents_dashboardCard_icon,
-                              styles.MapSidebar_contents_dashboardCard_icon___blue
+                              styles.MapTabs_contents_dashboardCard_icon,
+                              styles.MapTabs_contents_dashboardCard_icon___blue
                             )}
                           />
                         </div>
                       </Grid>
                     </Card>
 
-                    <Card className={styles.MapSidebar_contents_dashboardCard}>
+                    <Card className={styles.MapTabs_contents_dashboardCard}>
                       <Grid
-                        className={
-                          styles.MapSidebar_contents_dashboardCard_grid
-                        }
+                        className={styles.MapTabs_contents_dashboardCard_grid}
                       >
                         <div
                           className={
-                            styles.MapSidebar_contents_dashboardCard_leftColumn
+                            styles.MapTabs_contents_dashboardCard_leftColumn
                           }
                         >
                           <Text
@@ -627,14 +544,14 @@ const MapSidebar = ({ simulate, isSimulating, generatePins, setPins }) => {
 
                         <div
                           className={
-                            styles.MapSidebar_contents_dashboardCard_rightColumn
+                            styles.MapTabs_contents_dashboardCard_rightColumn
                           }
                         >
                           <Icon
                             icon="person"
                             className={cn(
-                              styles.MapSidebar_contents_dashboardCard_icon,
-                              styles.MapSidebar_contents_dashboardCard_icon___red
+                              styles.MapTabs_contents_dashboardCard_icon,
+                              styles.MapTabs_contents_dashboardCard_icon___red
                             )}
                           />
                         </div>
@@ -644,27 +561,27 @@ const MapSidebar = ({ simulate, isSimulating, generatePins, setPins }) => {
                 </div>
               </>
             )}
+
             {activeTab === mapTabs.CAMP_DATA.value && (
               <>
                 <Text
                   type={textTypes.HEADING.XXS}
-                  className={styles.MapSidebar_contents_title}
+                  className={styles.MapTabs_contents_title}
                 >
                   Camp Data
                 </Text>
-                <DataTable
-                  columns={usersColumns}
-                  data={usersData}
-                  expandableRowsComponent={(row) => (
-                    <DataTable
-                      columns={historyColumns}
-                      data={historiesData.filter(
-                        (h) => h.userID === row.data.id
-                      )}
-                      filter={false}
-                    />
-                  )}
-                />
+
+                <DataTable columns={usersColumns} data={usersData} />
+
+                {historyUser && (
+                  <ViewHistoryModal
+                    isOpen={historyUser}
+                    handleClose={() => setHistoryUser(null)}
+                    title={`View History (${historyUser.lastName}, ${historyUser.firstName})`}
+                    historyUserId={historyUser.id}
+                    logout={logout}
+                  />
+                )}
               </>
             )}
           </div>
@@ -674,15 +591,18 @@ const MapSidebar = ({ simulate, isSimulating, generatePins, setPins }) => {
   );
 };
 
-MapSidebar.defaultProps = {
+MapTabs.defaultProps = {
   isSimulating: false,
 };
 
-MapSidebar.propTypes = {
+MapTabs.propTypes = {
+  activeTab: PropTypes.string,
+  setActiveTab: PropTypes.func.isRequired,
   simulate: PropTypes.func.isRequired,
   isSimulating: PropTypes.bool,
   generatePins: PropTypes.func.isRequired,
   setPins: PropTypes.func.isRequired,
+  flyToLocation: PropTypes.func.isRequired,
 };
 
-export default MapSidebar;
+export default MapTabs;

@@ -7,11 +7,21 @@ import useSound from 'use-sound';
 import AlertSoundEffect from '../../static/mp3/alert-sound-effect.mp3';
 import styles from './styles.module.scss';
 
+import { ControlledSelect, Text } from '../../components/elements';
 import { MapContext } from '../../contexts';
+import { textTypes } from '../../globals';
 import { checkIsInBounds, checkIsInBuilding, movePin } from '../../utils/map';
-import outerWrapperGeoJson from './constants/outerWrapperGeoJson';
+import { mapViews, outerWrapperGeoJson } from './constants';
 import PinPopup from './PinPopup';
-import MapSidebar from './MapSidebar';
+import MapTabs from './MapTabs';
+
+// Legend
+import Personnel from '../../static/images/personnel.svg';
+import Vehicle from '../../static/images/vehicle.svg';
+import Visitor from '../../static/images/visitor.svg';
+import AlertPersonnel from '../../static/images/alert-personnel.svg';
+import AlertVehicle from '../../static/images/alert-vehicle.svg';
+import AlertVisitor from '../../static/images/alert-visitor.svg';
 
 // Constants
 mapboxgl.accessToken =
@@ -37,6 +47,11 @@ const Map = () => {
     alertLocations,
     updateAlertLocations,
   } = useContext(MapContext);
+  const [viewType, setViewType] = useState({
+    value: mapViews.ALL,
+    label: `View ${mapViews.ALL}`,
+  });
+  const [activeTab, setActiveTab] = useState(null);
   const [isSimulating, setIsSimulating] = useState(false);
 
   const generatePins = (locations) => {
@@ -53,11 +68,11 @@ const Map = () => {
       } else if (location.type === 'Vehicle') {
         icon = 'vehicle';
       } else if (location.type === 'Alert-Visitor') {
-        icon = 'visitor-alert';
+        icon = 'alert-visitor';
       } else if (location.type === 'Alert-Personnel') {
-        icon = 'personnel-alert';
+        icon = 'alert-personnel';
       } else if (location.type === 'Alert-Vehicle') {
-        icon = 'vehicle-alert';
+        icon = 'alert-vehicle';
       }
 
       // Get user details
@@ -91,44 +106,56 @@ const Map = () => {
     });
   };
 
-  const resolveAlert = (alertLocationId) => {
-    const alertLocationsCopy = JSON.parse(JSON.stringify(alertLocations));
-    const foundAlertLocation = alertLocationsCopy.find(
-      (alertLocation) => alertLocation.id === alertLocationId
-    );
+  const updateViewType = (selectedViewType) => {
+    if (selectedViewType.value === mapViews.ALL) {
+      setPins(
+        generatePins([...userLocations, ...vehicleLocations, ...alertLocations])
+      );
+    } else if (selectedViewType.value === mapViews.ALERTS) {
+      setPins(generatePins(alertLocations));
+    } else if (selectedViewType.value === mapViews.VEHICLES) {
+      setPins(generatePins(vehicleLocations));
+    } else if (selectedViewType.value === mapViews.PERSONNELS) {
+      const personnelLocations = userLocations.filter(
+        (userLocation) => userLocation.type === 'Personnel'
+      );
+      setPins(generatePins(personnelLocations));
+    } else if (selectedViewType.value === mapViews.VISITORS) {
+      const visitorLocations = userLocations.filter(
+        (userLocation) => userLocation.type === 'Visitor'
+      );
+      setPins(generatePins(visitorLocations));
+    }
 
-    // 1.) Update properties
-    foundAlertLocation.type = foundAlertLocation.type.substring(6);
-    delete foundAlertLocation.lastSeen;
-
-    // 2.) Add this updated alertLocation in userLocation to simulate
-    // return of user
-    updateUserLocations([...userLocations, foundAlertLocation]);
-
-    // 3.) We remove that alertLocation in alertLocations
-    const filteredAlertLocations = alertLocationsCopy.filter(
-      (alertLocation) => alertLocation.id !== alertLocationId
-    );
-    updateAlertLocations(filteredAlertLocations);
-
-    // 4.) Re set pins
-    const newPins = generatePins([
-      ...userLocations,
-      foundAlertLocation,
-      ...vehicleLocations,
-      ...filteredAlertLocations,
-    ]);
-    setPins(newPins);
-
-    // 5.) Hide popup
-    pinPopupRef.current.remove();
+    setViewType(selectedViewType);
   };
 
-  const updatePinsRandomly = (uLocations, vLocations, aLocations) => {
-    const historiesCopy = JSON.parse(JSON.stringify(histories));
-
+  const updatePinsRandomly = (
+    historiesToUpdate,
+    uLocations,
+    vLocations,
+    aLocations
+  ) => {
     uLocations.forEach((userLocation) => {
-      const newCoords = movePin(userLocation.latitude, userLocation.longitude);
+      let newCoords = movePin(
+        userLocation.longitude,
+        userLocation.latitude,
+        outerWrapperGeoJson
+      );
+
+      while (
+        !checkIsInBounds(
+          newCoords.newLng,
+          newCoords.newLat,
+          outerWrapperGeoJson
+        )
+      ) {
+        newCoords = movePin(
+          userLocation.longitude,
+          userLocation.latitude,
+          outerWrapperGeoJson
+        );
+      }
 
       userLocation.latitude = newCoords.newLat;
       userLocation.longitude = newCoords.newLng;
@@ -139,7 +166,7 @@ const Map = () => {
       );
       if (building) {
         // We update the officesVisited of the user in their history
-        const foundHistory = historiesCopy.find(
+        const foundHistory = historiesToUpdate.find(
           (history) => history.userID === userLocation.userID
         );
 
@@ -154,16 +181,29 @@ const Map = () => {
     });
 
     vLocations.forEach((vehicleLocation) => {
-      const newCoords = movePin(
+      let newCoords = movePin(
+        vehicleLocation.longitude,
         vehicleLocation.latitude,
-        vehicleLocation.longitude
+        outerWrapperGeoJson
       );
+
+      while (
+        !checkIsInBounds(
+          newCoords.newLng,
+          newCoords.newLat,
+          outerWrapperGeoJson
+        )
+      ) {
+        newCoords = movePin(
+          vehicleLocation.longitude,
+          vehicleLocation.latitude,
+          outerWrapperGeoJson
+        );
+      }
 
       vehicleLocation.latitude = newCoords.newLat;
       vehicleLocation.longitude = newCoords.newLng;
     });
-
-    updateHistories(historiesCopy);
 
     const newPins = generatePins([...uLocations, ...vLocations, ...aLocations]);
     setPins(newPins);
@@ -172,14 +212,26 @@ const Map = () => {
   const simulate = () => {
     setIsSimulating(true);
 
-    let userLocationsCopy = JSON.parse(JSON.stringify(userLocations));
-    const vehicleLocationsCopy = JSON.parse(JSON.stringify(vehicleLocations));
-    const alertLocationsCopy = JSON.parse(JSON.stringify(alertLocations));
+    const historiesCopy = JSON.parse(localStorage.getItem('histories'));
+    let userLocationsCopy = JSON.parse(localStorage.getItem('userLocations'));
+    const vehicleLocationsCopy = JSON.parse(
+      localStorage.getItem('vehicleLocations')
+    );
+    const alertLocationsCopy = JSON.parse(
+      localStorage.getItem('alertLocations')
+    );
+
+    // Set viewType to all
+    updateViewType({
+      value: mapViews.ALL,
+      label: `View ${mapViews.ALL}`,
+    });
 
     // Update each of their latitude and longitude randomly
     let times = 0;
     const simulateId = setInterval(() => {
       updatePinsRandomly(
+        historiesCopy,
         userLocationsCopy,
         vehicleLocationsCopy,
         alertLocationsCopy
@@ -234,6 +286,7 @@ const Map = () => {
         setPins(newPins);
 
         // Then, we update the localstorage and states
+        updateHistories(historiesCopy);
         updateUserLocations(userLocationsCopy);
         updateVehicleLocations(vehicleLocationsCopy);
         updateAlertLocations(alertLocationsCopy);
@@ -249,6 +302,64 @@ const Map = () => {
         clearInterval(simulateId);
       }
     }, 1000);
+  };
+
+  const flyToLocation = (userID) => {
+    const locations = [...userLocations, ...alertLocations];
+    const foundLocation = locations.find((l) => l.userID === userID);
+
+    // Hide activeTab
+    setActiveTab(null);
+
+    // Click pin
+    map.current.fire('click', {
+      lngLat: { lat: foundLocation.latitude, lng: foundLocation.longitude },
+      point: map.current.project([
+        foundLocation.longitude,
+        foundLocation.latitude,
+      ]),
+      originalEvent: {},
+    });
+  };
+
+  const resolveAlert = (alertLocationId) => {
+    const alertLocationsCopy = JSON.parse(
+      localStorage.getItem('alertLocations')
+    );
+    const userLocationsCopy = JSON.parse(localStorage.getItem('userLocations'));
+    const vehicleLocationsCopy = JSON.parse(
+      localStorage.getItem('vehicleLocations')
+    );
+
+    const foundAlertLocation = alertLocationsCopy.find(
+      (alertLocation) => alertLocation.id === alertLocationId
+    );
+
+    // 1.) Update properties
+    foundAlertLocation.type = foundAlertLocation.type.substring(6);
+    delete foundAlertLocation.lastSeen;
+
+    // 2.) Add this updated alertLocation in userLocation to simulate
+    // return of user
+    updateUserLocations([...userLocationsCopy, foundAlertLocation]);
+
+    // 3.) We remove that alertLocation in alertLocations
+    const filteredAlertLocations = alertLocationsCopy.filter(
+      (alertLocation) => alertLocation.id !== alertLocationId
+    );
+    updateAlertLocations(filteredAlertLocations);
+
+    // 4.) Re set pins
+    const newPins = generatePins([
+      ...userLocationsCopy,
+      foundAlertLocation,
+      ...vehicleLocationsCopy,
+      ...filteredAlertLocations,
+    ]);
+    setPins(newPins);
+
+    // 5.) Hide popup
+    pinPopupRef.current.remove();
   };
 
   useEffect(() => {
@@ -349,14 +460,116 @@ const Map = () => {
 
   return (
     <div className={styles.Map}>
-      <MapSidebar
+      <MapTabs
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
         simulate={simulate}
         isSimulating={isSimulating}
         generatePins={generatePins}
         setPins={setPins}
+        flyToLocation={flyToLocation}
       />
 
       <div ref={mapContainer} className={styles.Map_container} />
+
+      <div className={styles.MapFilter}>
+        <ControlledSelect
+          options={[
+            {
+              label: `View ${mapViews.ALL}`,
+              value: mapViews.ALL,
+            },
+            {
+              label: `View ${mapViews.ALERTS}`,
+              value: mapViews.ALERTS,
+            },
+            {
+              label: `View ${mapViews.VEHICLES}`,
+              value: mapViews.VEHICLES,
+            },
+            {
+              label: `View ${mapViews.PERSONNELS}`,
+              value: mapViews.PERSONNELS,
+            },
+            {
+              label: `View ${mapViews.VISITORS}`,
+              value: mapViews.VISITORS,
+            },
+          ]}
+          name="viewType"
+          label="View Type"
+          value={viewType}
+          onChange={(val) => updateViewType(val)}
+        />
+      </div>
+
+      {!activeTab && (
+        <div className={styles.MapLegend}>
+          <Text type={textTypes.HEADING.XXS}>Legend</Text>
+
+          <ul className={styles.MapLegend_lists}>
+            <li className={styles.MapLegend_lists_list}>
+              <img
+                src={Personnel}
+                alt="Personnel Icon"
+                className={styles.MapLegend_lists_list_icon}
+              />
+
+              <Text>Personnel</Text>
+            </li>
+
+            <li className={styles.MapLegend_lists_list}>
+              <img
+                src={Vehicle}
+                alt="Vehicle Icon"
+                className={styles.MapLegend_lists_list_icon}
+              />
+
+              <Text>Vehicle</Text>
+            </li>
+
+            <li className={styles.MapLegend_lists_list}>
+              <img
+                src={Visitor}
+                alt="Visitor Icon"
+                className={styles.MapLegend_lists_list_icon}
+              />
+
+              <Text>Visitor</Text>
+            </li>
+
+            <li className={styles.MapLegend_lists_list}>
+              <img
+                src={AlertPersonnel}
+                alt="Alert Personnel Icon"
+                className={styles.MapLegend_lists_list_icon}
+              />
+
+              <Text>Alert Personnel</Text>
+            </li>
+
+            <li className={styles.MapLegend_lists_list}>
+              <img
+                src={AlertVehicle}
+                alt="Alert Vehicle Icon"
+                className={styles.MapLegend_lists_list_icon}
+              />
+
+              <Text>Alert Vehicle</Text>
+            </li>
+
+            <li className={styles.MapLegend_lists_list}>
+              <img
+                src={AlertVisitor}
+                alt="Alert Visitor Icon"
+                className={styles.MapLegend_lists_list_icon}
+              />
+
+              <Text>Alert Visitor</Text>
+            </li>
+          </ul>
+        </div>
+      )}
     </div>
   );
 };

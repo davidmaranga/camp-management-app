@@ -61,9 +61,8 @@ const randomPointInPoly = (polygon) => {
   const poly = polygon.toGeoJSON();
   poly.geometry.type = 'Polygon';
   poly.geometry.coordinates = [poly.geometry.coordinates];
-  console.log(poly);
-  const ins = booleanPointInPolygon(pt, poly);
 
+  const ins = booleanPointInPolygon(pt, poly);
   if (ins) {
     return pt;
   }
@@ -73,7 +72,7 @@ const randomPointInPoly = (polygon) => {
 
 const Map3d = () => (
   <div className={styles.Map3d}>
-    <MapSidebar />
+    {/* <MapSidebar /> */}
 
     <WrldMap
       apiKey="f66426e3ccc3c0d0220283b8fb32ded5"
@@ -86,37 +85,32 @@ const Map3d = () => (
         zoom: 20,
       }}
       onInitialStreamingComplete={(map) => {
-        const outerWrapperPolyline = Wrld.polyline(outerWrapper, {
-          color: 'FF7E00',
-        }).addTo(map);
-
-        Wrld.polyline(tompkinsSquarePark, {
-          color: '9966CC',
-        }).addTo(map);
-
-        Wrld.polyline(villageViewHousingCorporation, {
-          color: '00FFFF',
-        }).addTo(map);
-
-        Wrld.polyline(eastSideCommunity, {
-          color: 'BFFF00',
-        }).addTo(map);
-
-        Wrld.polyline(botanicalGarden, {
-          color: 'FFBCD9',
-        }).addTo(map);
-
-        for (let i = 0; i < 20; i++) {
-          Wrld.marker(
-            [
-              randomPointInPoly(outerWrapperPolyline).geometry.coordinates[1],
-              randomPointInPoly(outerWrapperPolyline).geometry.coordinates[0],
-            ],
-            {
-              draggable: true,
-            }
-          ).addTo(map);
-        }
+        // const outerWrapperPolyline = Wrld.polyline(outerWrapper, {
+        //   color: 'FF7E00',
+        // }).addTo(map);
+        // Wrld.polyline(tompkinsSquarePark, {
+        //   color: '9966CC',
+        // }).addTo(map);
+        // Wrld.polyline(villageViewHousingCorporation, {
+        //   color: '00FFFF',
+        // }).addTo(map);
+        // Wrld.polyline(eastSideCommunity, {
+        //   color: 'BFFF00',
+        // }).addTo(map);
+        // Wrld.polyline(botanicalGarden, {
+        //   color: 'FFBCD9',
+        // }).addTo(map);
+        // for (let i = 0; i < 20; i++) {
+        //   Wrld.marker(
+        //     [
+        //       randomPointInPoly(outerWrapperPolyline).geometry.coordinates[1],
+        //       randomPointInPoly(outerWrapperPolyline).geometry.coordinates[0],
+        //     ],
+        //     {
+        //       draggable: true,
+        //     }
+        //   ).addTo(map);
+        // }
       }}
     />
   </div>
