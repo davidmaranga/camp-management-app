@@ -131,6 +131,23 @@ const MapSidebar = ({ simulate, isSimulating, generatePins, setPins }) => {
       selector: (row) => row.status,
       sortable: true,
     },
+    {
+      name: 'Action',
+      selector: (row) => row.action,
+      sortable: false,
+      button: true,
+      cell: (row) => (
+        <>
+          <Button
+            className={styles.MapSidebar_contents_logoutButton}
+            type={buttonTypes.PRIMARY.BLUE}
+            onClick={() => logout(row.userID)}
+          >
+            info
+          </Button>
+        </>
+      ),
+    },
   ];
 
   const historyColumns = [

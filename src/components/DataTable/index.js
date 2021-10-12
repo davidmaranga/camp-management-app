@@ -11,6 +11,14 @@ const customStyles = {
       paddingBottom: '12px',
     },
   },
+  headCells: {
+    style: {
+      paddingLeft: '12px', // override the cell padding for head cells
+      paddingRight: '12px',
+      backgroundColor: '#f3f3f3', // set the background color of the th
+      color: '#55b9df', // set the color fo header text
+    },
+  },
 };
 
 const DataTable = ({ columns, data, filter, expandableRowsComponent }) => (
