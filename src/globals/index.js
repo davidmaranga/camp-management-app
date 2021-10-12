@@ -13,7 +13,6 @@ export { default as modalSizes } from './modalSizes';
 export { default as selectTypes } from './selectTypes';
 export { default as sexTypes } from './sexTypes';
 export { default as spinnerSizes } from './spinnerSizes';
-export { default as sweetAlertTypes } from './sweetAlertTypes';
 export { default as tabTypes } from './tabTypes';
 export { default as textTypes } from './textTypes';
 export { default as userTypes } from './userTypes';

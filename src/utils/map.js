@@ -1,6 +1,7 @@
 import { point, polygon, booleanPointInPolygon } from '@turf/turf';
 import { buildingsCoordinates } from '../screens/Map/MapTabs/constants';
 
+// Checks if a specifc point is inside bounds of a polygon
 export const checkIsInBounds = (lng, lat, polyGeoJson) => {
   const pt = point([lng, lat]);
   const inside = booleanPointInPolygon(pt, polyGeoJson);
@@ -8,7 +9,10 @@ export const checkIsInBounds = (lng, lat, polyGeoJson) => {
   return inside;
 };
 
+// Creates a random point inside a polygon
 export const randomPointInPoly = (polyGeoJson) => {
+  // This is just the coordinates of the outer wrapper
+  // of Camp Crame
   const x_min = 121.06171138652763;
   const x_max = 121.04626186260231;
   const y_min = 14.604151123076718;

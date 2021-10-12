@@ -15,7 +15,7 @@ import { mapViews, outerWrapperGeoJson } from './constants';
 import PinPopup from './PinPopup';
 import MapTabs from './MapTabs';
 
-// Legend
+// Legend Images
 import Personnel from '../../static/images/personnel.svg';
 import Vehicle from '../../static/images/vehicle.svg';
 import Visitor from '../../static/images/visitor.svg';
@@ -33,9 +33,11 @@ const zoom = 16;
 const Map = () => {
   const alert = useAlert();
   const [playAlert] = useSound(AlertSoundEffect);
+
   const mapContainer = useRef(null);
   const map = useRef(null);
   const pinPopupRef = useRef(new mapboxgl.Popup({ offset: 15 }));
+
   const {
     users,
     histories,
@@ -47,6 +49,7 @@ const Map = () => {
     alertLocations,
     updateAlertLocations,
   } = useContext(MapContext);
+
   const [viewType, setViewType] = useState({
     value: mapViews.ALL,
     label: `View ${mapViews.ALL}`,

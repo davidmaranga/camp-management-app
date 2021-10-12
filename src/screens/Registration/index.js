@@ -327,7 +327,7 @@ const Registration = () => {
                 updateHistories([...histories, newHistory]);
 
                 // If the user doesn't have a cellphone, it means that
-                // he/she must be given a gps deviced
+                // he/she must be given a gps device
                 if (values.hasCellphone.value === 'No') {
                   // So, we remove the gpsDeviceOption selected for
                   // userGpsDevice in the state
