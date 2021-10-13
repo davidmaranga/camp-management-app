@@ -42,6 +42,12 @@ const ViewHistoryModal = ({
       ),
     },
     {
+      name: 'Temperature',
+      selector: (row) => row.temperature,
+      sortable: true,
+      minWidth: '150px',
+    },
+    {
       name: 'Date',
       selector: (row) => row.date,
       sortable: true,
@@ -154,6 +160,7 @@ const ViewHistoryModal = ({
     historiesData.push({
       ...history,
       date: convertTimestampToDate(history?.date),
+      temperature: history?.temperature ? history?.temperature : '36.4 C',
       timeIn: convertTimestampToTimeWithSuffix(history?.timeIn),
       timeOut: history?.timeOut
         ? convertTimestampToTimeWithSuffix(history?.timeOut)

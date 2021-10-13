@@ -87,8 +87,12 @@ const Registration = () => {
       errors.userType = 'This field is required.';
     }
 
-    if (!values.hasCellphone.value) {
-      errors.hasCellphone = 'This field is required.';
+    if (!values.userType.value && !foundUser) {
+      errors.userType = 'This field is required.';
+    }
+
+    if (!values.temperature.value) {
+      errors.temperature = 'This field is required.';
     }
 
     if (!values.userGpsDevice.value && values.hasCellphone.value === 'No') {
@@ -194,6 +198,7 @@ const Registration = () => {
                   label: userTypes.VISITOR,
                   value: userTypes.VISITOR,
                 },
+                temperature: '',
                 hasCellphone: {
                   label: 'Yes',
                   value: 'Yes',
@@ -267,6 +272,7 @@ const Registration = () => {
 
                 const newHistory = {
                   userID: id,
+                  temperature: values.temperature,
                   date: new Date(),
                   timeIn: Math.floor(Date.now() / 1000),
                   timeOut: null,
@@ -369,6 +375,7 @@ const Registration = () => {
                   label: userTypes.VISITOR,
                   value: userTypes.VISITOR,
                 });
+                setFieldValue('temperature', '');
                 setFieldValue('hasCellphone', {
                   label: 'Yes',
                   value: 'Yes',
@@ -549,6 +556,18 @@ const Registration = () => {
                       />
                     </>
                   )}
+
+                  <ControlledInput
+                    className={styles.Registration_container_form_withMargin}
+                    name="temperature"
+                    label="Temperature*"
+                    icon="thermostat"
+                    value={values.temperature}
+                    error={errors.temperature}
+                    onChange={(e) =>
+                      setFieldValue('temperature', e.target.value)
+                    }
+                  />
 
                   <ControlledSelect
                     className={styles.Registration_container_form_withMargin}
